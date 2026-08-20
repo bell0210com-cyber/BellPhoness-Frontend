@@ -1,6 +1,7 @@
 import { auth } from './firebaseClient';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 
+  (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://api.bellphoness.com');
 
 async function request(path, options = {}) {
   const token = await auth?.currentUser?.getIdToken();
