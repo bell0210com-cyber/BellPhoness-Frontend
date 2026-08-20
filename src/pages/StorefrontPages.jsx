@@ -11,6 +11,7 @@ import {
   subscribeToAuth,
   getCustomerProfile,
 } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 export function AuthPage({ type }) {
   const navigate = useNavigate();
 
@@ -493,51 +494,14 @@ export function AuthPage({ type }) {
 export function AccountPage() {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
-    const unsubscribe = subscribeToAuth(async (currentUser) => {
-      if (!mounted) return;
-
-      if (!currentUser) {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-        navigate('/login', { replace: true });
-        return;
-      }
-
-      setUser(currentUser);
-
-      try {
-        const customerProfile =
-          await getCustomerProfile(currentUser.uid);
-
-        if (mounted) {
-          setProfile(customerProfile);
-        }
-      } catch (error) {
-        console.error(
-          'Failed to load customer profile:',
-          error
-        );
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    });
-
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, [navigate]);
+    if (!loading && !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleLogout = async () => {
     try {

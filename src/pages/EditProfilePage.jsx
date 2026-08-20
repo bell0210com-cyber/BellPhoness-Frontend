@@ -1,30 +1,25 @@
 import { useEffect, useState } from 'react';
-import { getAuth, updateProfile } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import PageHero from '../components/PageHero';
+import { PageHero } from '../components/PageHero';
 import Seo from '../components/Seo';
 import { db } from '../services/firebaseClient';
+import { useAuth } from '../context/AuthContext';
 
 export default function EditProfilePage() {
-  const auth = getAuth();
-  const user = auth.currentUser;
-
+  const { user, profile, loading: authLoading } = useAuth();
   const [values, setValues] = useState({ name: '', phone: '' });
   const [state, setState] = useState({ kind: '', message: '' });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    getDoc(doc(db, 'customers', user.uid)).then((snap) => {
-      const data = snap.exists() ? snap.data() : {};
+    if (profile || user) {
       setValues({
-        name: data.name || user.displayName || '',
-        phone: data.phone || '',
+        name: profile?.name || user?.displayName || '',
+        phone: profile?.phone || '',
       });
-      setLoading(false);
-    });
-  }, [user]);
+    }
+  }, [profile, user]);
 
   const update = (key, value) => setValues((current) => ({ ...current, [key]: value }));
 
@@ -66,7 +61,7 @@ export default function EditProfilePage() {
     );
   }
 
-  if (loading) return null;
+  if (authLoading) return null;
 
   return (
     <>

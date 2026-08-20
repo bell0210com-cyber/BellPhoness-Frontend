@@ -54,13 +54,16 @@ function ScrollToTop() {
   return null;
 }
 
+import { AuthProvider } from './context/AuthContext';
+
 export default function App() {
   return (
-    <StoreProvider>
-      <ProductsProvider>
-        <PageLayout>
-          <ScrollToTop />
-          <Routes>
+    <AuthProvider>
+      <StoreProvider>
+        <ProductsProvider>
+          <PageLayout>
+            <ScrollToTop />
+            <Routes>
 
             {/* MAIN */}
             <Route
@@ -233,5 +236,6 @@ export default function App() {
         </PageLayout>
       </ProductsProvider>
     </StoreProvider>
+    </AuthProvider>
   );
 }

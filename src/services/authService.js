@@ -18,6 +18,7 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore';
 
 import { auth, firebaseClientReady } from './firebaseClient';
@@ -178,3 +179,13 @@ export function subscribeToAuth(callback) {
 
 export const authConfigurationReady =
   firebaseConfigured;
+export function subscribeToProfile(uid, callback) {
+  if (!db || !uid) {
+    callback(null);
+    return () => {};
+  }
+  return onSnapshot(doc(db, "customers", uid), (snapshot) => {
+    callback(snapshot.exists() ? snapshot.data() : null);
+  });
+}
+

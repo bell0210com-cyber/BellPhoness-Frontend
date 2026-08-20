@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { businessConfig } from '../config/businessConfig';
 
 const links = [
@@ -10,6 +11,7 @@ const links = [
 
 export default function SiteHeader() {
   const { cart, wishlist } = useStore();
+  const { firstName } = useAuth();
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const [bump, setBump] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -32,7 +34,7 @@ export default function SiteHeader() {
         <nav id="primary-navigation" className={`main-nav ${menuOpen ? 'open' : ''}`} aria-label="Primary navigation">
           {links.map(([label, href]) => <NavLink onClick={() => setMenuOpen(false)} key={href} to={href}>{label}</NavLink>)}
         </nav>
-        <div className="header-actions"><Link to="/search" aria-label="Search">⌕</Link><Link to="/wishlist" aria-label="Wishlist">♡<i>{wishlist.length}</i></Link><Link to="/cart" aria-label="Cart" id="cart-icon" className={bump ? 'cart-bump' : ''}>Bag<i>{cartCount}</i></Link><Link to="/account" aria-label="Account">Account</Link></div>
+        <div className="header-actions"><Link to="/search" aria-label="Search">⌕</Link><Link to="/wishlist" aria-label="Wishlist">♡<i>{wishlist.length}</i></Link><Link to="/cart" aria-label="Cart" id="cart-icon" className={bump ? 'cart-bump' : ''}>Bag<i>{cartCount}</i></Link><Link to="/account" aria-label="Account">{firstName}</Link></div>
       </div>
     </header>
   );
