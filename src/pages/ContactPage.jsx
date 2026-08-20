@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import Seo from '../components/Seo';
 import { businessConfig } from '../config/businessConfig';
 import { submitContactForm } from '../services/contactService';
-import PhoneInput from 'react-phone-input-2';
+import PhoneInputModule from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+
+const PhoneInput = PhoneInputModule.default || PhoneInputModule;
 
 const emptyValue = 'Not configured yet';
 const contactItems = [
