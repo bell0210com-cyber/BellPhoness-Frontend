@@ -205,7 +205,10 @@ export default function ProductPage() {
             <button
               className="button button-gold"
               disabled={!currentVariant.stock}
-              onClick={() => addToCart(product, currentVariant, quantity)}
+              onClick={(e) => {
+                import('../utils/animateToCart').then(m => m.animateToCart(e, (currentVariant.images || product.images)[0]));
+                addToCart(product, currentVariant, quantity);
+              }}
             >
               Add to Cart
             </button>
