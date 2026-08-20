@@ -112,3 +112,37 @@
   100% { transform: scale(1); }
 }
 
+
+.phone-input-container {
+  margin-top: 5px;
+}
+.phone-input-container .form-control {
+  width: 100% !important;
+  border: 0 !important;
+  border-bottom: 1px solid #b7aea1 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 10px 0 10px 48px !important;
+  font: 13px Manrope !important;
+  color: #111 !important;
+  outline: 0 !important;
+}
+.phone-input-container .flag-dropdown {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid #b7aea1 !important;
+  border-radius: 0 !important;
+}
+.phone-input-container .selected-flag {
+  background: transparent !important;
+}
+.phone-input-container .selected-flag:hover {
+  background: transparent !important;
+}
+.phone-input-container .country-list {
+  background: #f0ede7 !important;
+  border-radius: 12px !important;
+  border: 1px solid #d8d1c8 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+

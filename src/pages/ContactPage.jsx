@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import Seo from '../components/Seo';
 import { businessConfig } from '../config/businessConfig';
 import { submitContactForm } from '../services/contactService';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const emptyValue = 'Not configured yet';
 const contactItems = [
@@ -19,7 +21,7 @@ function validate(values) {
   const errors = {};
   if (!values.name.trim()) errors.name = 'Please enter your full name.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errors.email = 'Enter a valid email address.';
-  if (!/^[+()\d\s-]{7,}$/.test(values.phone)) errors.phone = 'Enter a valid phone number.';
+  if (!values.phone || values.phone.length < 10) errors.phone = 'Enter a valid phone number with country code.';
   if (!values.subject.trim()) errors.subject = 'Please enter a subject.';
   if (!values.message.trim()) errors.message = 'Please enter a message.';
   return errors;
@@ -59,7 +61,22 @@ export default function ContactPage() {
         <div className="form-heading"><p className="eyebrow">SEND A MESSAGE</p><h2>How can we <em>help?</em></h2></div>
         {status === 'success' && <div className="form-state success" role="status">Thanks for contacting BELL. Your message has been received.</div>}
         {status === 'error' && <div className="form-state error" role="alert">{errorMessage} Contact service setup is required for `POST /api/contact`.</div>}
-        {[['name', 'Full Name', 'text'], ['email', 'Email', 'email'], ['phone', 'Phone', 'tel'], ['subject', 'Subject', 'text']].map(([name, label, type]) => <label key={name}>{label}<input name={name} type={type} value={values[name]} onChange={update} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <small id={`${name}-error`} className="field-error">{errors[name]}</small>}</label>)}
+        {[['name', 'Full Name', 'text'], ['email', 'Email', 'email'], ['subject', 'Subject', 'text']].map(([name, label, type]) => <label key={name}>{label}<input name={name} type={type} value={values[name]} onChange={update} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <small id={`${name}-error`} className="field-error">{errors[name]}</small>}</label>)}
+        
+        <label>
+          Phone
+          <PhoneInput
+            country={'ae'}
+            value={values.phone}
+            onChange={(phone) => setValues(current => ({ ...current, phone }))}
+            inputProps={{
+              name: 'phone',
+              required: true,
+            }}
+            containerClass="phone-input-container"
+          />
+          {errors.phone && <small className="field-error">{errors.phone}</small>}
+        </label>
         <label>Message<textarea name="message" value={values.message} onChange={update} rows="5" aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? 'message-error' : undefined} />{errors.message && <small id="message-error" className="field-error">{errors.message}</small>}</label>
         <button className="button button-gold" disabled={status === 'loading'}>{status === 'loading' ? 'Sending…' : 'Send Message'} <span>→</span></button>
         <p className="form-note">This form sends to <code>POST /api/contact</code>. Connect a backend email or contact service to receive messages.</p>
