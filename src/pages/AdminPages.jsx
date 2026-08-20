@@ -5,10 +5,11 @@ import {
   signOut,
   getIdTokenResult
 } from 'firebase/auth';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import Seo from '../components/Seo';
-import { firebaseClientReady } from '../services/firebaseClient';
+import { firebaseClientReady, db } from '../services/firebaseClient';
 import { adminApi } from '../services/adminApi';
 import { createEmptyVariant } from '../data/productSchema';
 import { uploadImageToCloudinary } from '../services/cloudinary';
@@ -1077,12 +1078,34 @@ export function AdminSimplePage({
 export function AdminCustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [error, setError] = useState('');
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
 
   useEffect(() => {
-    adminApi
-      .customers()
-      .then(setCustomers)
-      .catch((requestError) => setError(requestError.message));
+    if (!db) {
+      setError('Database not available.');
+      setLoadingCustomers(false);
+      return;
+    }
+    // Real-time Firestore listener — updates instantly when new customers sign up
+    const q = query(collection(db, 'customers'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+          // normalize Firestore Timestamp to JS Date
+          createdAt: docSnap.data().createdAt?.toDate?.() ?? docSnap.data().createdAt,
+        }));
+        setCustomers(data);
+        setLoadingCustomers(false);
+      },
+      (err) => {
+        setError(err.message);
+        setLoadingCustomers(false);
+      }
+    );
+    return unsub;
   }, []);
 
   return (
@@ -1097,33 +1120,39 @@ export function AdminCustomersPage() {
 
         <ErrorNotice message={error} />
 
-        <div className="admin-table">
-          <div className="admin-row admin-table-head">
-            <span>Name</span>
-            <span>Email</span>
-            <span>Phone</span>
-            <span>Orders</span>
-            <span>Joined</span>
-          </div>
-
-          {customers.map((customer) => (
-            <div className="admin-row" key={customer.id}>
-              <span>{customer.name || '—'}</span>
-              <span>{customer.email}</span>
-              <span>{customer.phone || '—'}</span>
-              <span>{customer.orderCount ?? 0}</span>
-              <span>
-                {customer.createdAt
-                  ? new Date(customer.createdAt).toLocaleDateString()
-                  : '—'}
-              </span>
+        {loadingCustomers ? (
+          <div className="admin-empty">Loading customers…</div>
+        ) : (
+          <div className="admin-table">
+            <div className="admin-row admin-table-head">
+              <span>Name</span>
+              <span>Email</span>
+              <span>Phone</span>
+              <span>Orders</span>
+              <span>Joined</span>
             </div>
-          ))}
 
-          {!customers.length && !error && (
-            <div className="admin-empty">No customers yet.</div>
-          )}
-        </div>
+            {customers.map((customer) => (
+              <div className="admin-row" key={customer.id}>
+                <span>{customer.name || '—'}</span>
+                <span>{customer.email || '—'}</span>
+                <span>{customer.phone || '—'}</span>
+                <span>{customer.orderCount ?? 0}</span>
+                <span>
+                  {customer.createdAt instanceof Date
+                    ? customer.createdAt.toLocaleDateString()
+                    : customer.createdAt
+                      ? new Date(customer.createdAt).toLocaleDateString()
+                      : '—'}
+                </span>
+              </div>
+            ))}
+
+            {!customers.length && !error && (
+              <div className="admin-empty">No customers yet.</div>
+            )}
+          </div>
+        )}
       </AdminShell>
     </AdminGuard>
   );

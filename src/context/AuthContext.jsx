@@ -29,11 +29,14 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const firstName = profile?.name 
-    ? profile.name.split(' ')[0] 
-    : user?.email 
-      ? user.email.split('@')[0] 
-      : 'Account';
+  // Only show name when fully resolved — never flash email as the name
+  const firstName = loading
+    ? null  // null = still loading
+    : profile?.name
+      ? profile.name.trim().split(' ')[0]
+      : user?.displayName
+        ? user.displayName.trim().split(' ')[0]
+        : 'Account';
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, firstName }}>

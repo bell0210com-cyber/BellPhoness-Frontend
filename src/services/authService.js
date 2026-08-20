@@ -143,6 +143,8 @@ export async function signInWithGoogle() {
   const user = result.user;
 
   if (db) {
+    // isNewUser = first Google sign-in; preserve createdAt if already exists
+    const isNew = result.additionalUserInfo?.isNewUser;
     await setDoc(
       doc(db, 'customers', user.uid),
       {
@@ -151,6 +153,7 @@ export async function signInWithGoogle() {
         email: user.email || '',
         photoURL: user.photoURL || '',
         updatedAt: serverTimestamp(),
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
       },
       { merge: true }
     );

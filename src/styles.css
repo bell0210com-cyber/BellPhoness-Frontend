@@ -165,3 +165,20 @@
   padding: 80px 20px;
 }
 
+
+/* Account link skeleton while auth loads */
+.account-skeleton {
+  display: inline-block;
+  width: 52px;
+  height: 10px;
+  background: linear-gradient(90deg, #d4c9bb 25%, #e8e2da 50%, #d4c9bb 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s infinite;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
