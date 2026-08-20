@@ -36,5 +36,5 @@ export function animateToCart(e, imageUrl) {
     if (document.body.contains(img)) {
       document.body.removeChild(img);
     }
-  }, 800); // 800ms matching CSS duration
+  }, 1500); // 1500ms matching CSS duration
 }

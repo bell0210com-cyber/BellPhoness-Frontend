@@ -82,3 +82,33 @@
   animation: cart-bump 0.3s ease-out;
 }
 
+
+.page-transition {
+  animation: page-fade 0.4s ease-out;
+}
+
+@keyframes page-fade {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.product-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.product-image-wrap {
+  border-radius: 16px 16px 0 0;
+}
+
+.icon-button.wish.active {
+  color: #ff3b30 !important;
+  animation: heart-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+

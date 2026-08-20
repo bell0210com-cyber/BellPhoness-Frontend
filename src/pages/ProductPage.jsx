@@ -225,7 +225,7 @@ export default function ProductPage() {
             </button>
 
             <button
-              className="icon-button large"
+              className={`icon-button large wish ${isWishlisted(id) ? 'active' : ''}`}
               onClick={() => toggleWishlist(product)}
               aria-label="Toggle wishlist"
             >
