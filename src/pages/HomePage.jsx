@@ -63,7 +63,7 @@ export default function HomePage() {
           </div>
 
           <div className="hero-device">
-            <img src={products[1]?.images?.[0]} alt="Premium smartphone" />
+            <img src="https://res.cloudinary.com/pkotqxwo/image/upload/v1787350499/aewfzyvxrgfgbjzdggfk.jpg" alt="Premium smartphone" />
             <span>
               THE EDIT
               <br />
