@@ -13,6 +13,7 @@ import { firebaseClientReady, db } from '../services/firebaseClient';
 import { adminApi } from '../services/adminApi';
 import { createEmptyVariant } from '../data/productSchema';
 import { uploadImageToCloudinary } from '../services/cloudinary';
+import { getAllReviews, deleteReview } from '../services/reviewService';
 
 const categories = [
   'iPhone',
@@ -58,6 +59,7 @@ const AdminShell = ({ children }) => (
         ['Products', '/admin/products'],
         ['Orders', '/admin/orders'],
         ['Customers', '/admin/customers'],
+        ['Reviews', '/admin/reviews'],
         ['Settings', '/admin/settings']
       ].map(([label, path]) => (
         <Link key={path} to={path}>
@@ -1567,6 +1569,94 @@ export function AdminOrderDetailPage() {
                 ))}
               </div>
             </section>
+          </div>
+        )}
+      </AdminShell>
+    </AdminGuard>
+  );
+}
+
+/* =========================================================
+   ADMIN REVIEWS
+========================================================= */
+
+export function AdminReviewsPage() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadReviews();
+  }, []);
+
+  const loadReviews = () => {
+    setLoading(true);
+    getAllReviews()
+      .then(setReviews)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    try {
+      await deleteReview(id);
+      setReviews(reviews.filter(r => r.id !== id));
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  return (
+    <AdminGuard>
+      <AdminShell>
+        <header className="admin-header">
+          <div>
+            <p className="eyebrow">MODERATION</p>
+            <h1>Reviews</h1>
+          </div>
+        </header>
+
+        <ErrorNotice message={error} />
+
+        {loading ? (
+          <div className="admin-empty">Loading reviews...</div>
+        ) : (
+          <div className="admin-table">
+            <div className="admin-row admin-table-head" style={{ gridTemplateColumns: '1.5fr 1fr .8fr 2fr 1fr' }}>
+              <span>Product ID</span>
+              <span>Customer</span>
+              <span>Rating</span>
+              <span>Review</span>
+              <span>Actions</span>
+            </div>
+
+            {reviews.map((r) => (
+              <div className="admin-row" key={r.id} style={{ gridTemplateColumns: '1.5fr 1fr .8fr 2fr 1fr' }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.productId}>
+                  {r.productId}
+                </span>
+                <span>
+                  {r.customerName}
+                  {r.verifiedPurchase && <small>Verified</small>}
+                </span>
+                <span>{r.rating} / 5</span>
+                <span>
+                  <strong>{r.reviewTitle}</strong>
+                  <br />
+                  <span style={{ fontSize: '11px', color: '#777' }}>{r.reviewText}</span>
+                </span>
+                <span>
+                  <button onClick={() => handleDelete(r.id)} style={{ color: '#8f2b20' }}>
+                    Delete
+                  </button>
+                </span>
+              </div>
+            ))}
+
+            {!reviews.length && !error && (
+              <div className="admin-empty">No reviews yet.</div>
+            )}
           </div>
         )}
       </AdminShell>

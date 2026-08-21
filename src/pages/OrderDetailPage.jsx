@@ -4,6 +4,8 @@ import PageHero from '../components/PageHero';
 import Seo from '../components/Seo';
 import { orderApi } from '../services/orderApi';
 
+import ReviewForm from '../components/ReviewForm';
+
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
     style: 'currency',
@@ -17,6 +19,7 @@ export default function OrderDetailPage() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
+  const [reviewingProduct, setReviewingProduct] = useState(null);
 
   useEffect(() => {
     orderApi.get(id).then(setOrder).catch((e) => setError(e.message));
@@ -53,9 +56,36 @@ export default function OrderDetailPage() {
 
         <div className="spec-table" style={{ marginTop: 30 }}>
           {order.items?.map((item) => (
-            <div key={item.variantId}>
-              <span>{item.name} ({item.sku}) × {item.quantity}</span>
-              <b>{formatPrice(item.lineTotal)}</b>
+            <div key={item.variantId} style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+                <span>{item.name} ({item.sku}) × {item.quantity}</span>
+                <b>{formatPrice(item.lineTotal)}</b>
+              </div>
+              
+              {order.status === 'Delivered' && (
+                <div style={{ marginTop: 10 }}>
+                  {reviewingProduct === item.productId ? (
+                    <ReviewForm 
+                      productId={item.productId}
+                      orderId={order.id}
+                      productName={item.name}
+                      onCancel={() => setReviewingProduct(null)}
+                      onSuccess={() => {
+                        setReviewingProduct(null);
+                        alert('Review submitted successfully!');
+                      }}
+                    />
+                  ) : (
+                    <button 
+                      className="button button-outline-dark" 
+                      style={{ padding: '8px 12px', fontSize: '10px' }}
+                      onClick={() => setReviewingProduct(item.productId)}
+                    >
+                      Leave a Review
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
           <div>

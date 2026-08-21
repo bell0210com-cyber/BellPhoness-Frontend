@@ -42,6 +42,7 @@ import {
   AdminCustomersPage,
   AdminSettingsPage,
   AdminSimplePage,
+  AdminReviewsPage,
 } from './pages/AdminPages';
 
 import { useLocation } from 'react-router-dom';
@@ -220,6 +221,11 @@ export default function App() {
             <Route
               path="/admin/customers"
               element={<AdminCustomersPage />}
+            />
+
+            <Route
+              path="/admin/reviews"
+              element={<AdminReviewsPage />}
             />
 
             <Route

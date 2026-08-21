@@ -7,6 +7,7 @@ import VariantSelector from '../components/VariantSelector';
 import { productPrice, productVariants } from '../data/products';
 import { useProducts } from '../context/ProductsContext';
 import { useStore } from '../context/StoreContext';
+import ProductReviews from '../components/ProductReviews';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -305,6 +306,8 @@ export default function ProductPage() {
           </div>
         </div>
       </section>
+
+      <ProductReviews productId={product.id} />
 
       {!!related.length && (
         <section className="product-section shell">
