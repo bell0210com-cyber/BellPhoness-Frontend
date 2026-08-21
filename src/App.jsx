@@ -38,6 +38,7 @@ import {
   AdminProductForm,
   AdminProductsPage,
   AdminOrdersPage,
+  AdminOrderDetailPage,
   AdminCustomersPage,
   AdminSettingsPage,
   AdminSimplePage,
@@ -213,7 +214,7 @@ export default function App() {
 
             <Route
               path="/admin/orders/:id"
-              element={<AdminSimplePage title="Order details" />}
+              element={<AdminOrderDetailPage />}
             />
 
             <Route

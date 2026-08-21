@@ -1255,7 +1255,7 @@ export function AdminSettingsPage() {
 }
 
 /* =========================================================
-   ADMIN ORDERS  (with updated status dropdown)
+   ADMIN ORDERS  (with status dropdown + View link)
 ========================================================= */
 
 const ORDER_STATUSES = ['Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
@@ -1263,7 +1263,6 @@ const ORDER_STATUSES = ['Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered'
 const formatOrderDate = (value) => {
   if (!value) return '—';
 
-  // Firestore Timestamp serialized over JSON looks like { _seconds, _nanoseconds }
   if (typeof value === 'object' && value._seconds) {
     return new Date(value._seconds * 1000).toLocaleDateString();
   }
@@ -1320,6 +1319,7 @@ export function AdminOrdersPage() {
             <span>Total</span>
             <span>Status</span>
             <span>Date</span>
+            <span>Details</span>
           </div>
 
           {orders.map((order) => (
@@ -1346,6 +1346,9 @@ export function AdminOrdersPage() {
                 </select>
               </span>
               <span>{formatOrderDate(order.createdAt)}</span>
+              <span>
+                <Link to={`/admin/orders/${order.id}`}>View</Link>
+              </span>
             </div>
           ))}
 
@@ -1353,6 +1356,200 @@ export function AdminOrdersPage() {
             <div className="admin-empty">No orders yet.</div>
           )}
         </div>
+      </AdminShell>
+    </AdminGuard>
+  );
+}
+
+/* =========================================================
+   ADMIN ORDER DETAIL
+========================================================= */
+
+const formatOrderDate2 = (value) => {
+  if (!value) return '—';
+  if (typeof value === 'object' && value._seconds) {
+    return new Date(value._seconds * 1000).toLocaleString();
+  }
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? '—' : date.toLocaleString();
+};
+
+export function AdminOrderDetailPage() {
+  const { id } = useParams();
+  const [order, setOrder] = useState(null);
+  const [error, setError] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    adminApi
+      .order(id)
+      .then(setOrder)
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
+
+  const changeStatus = async (status) => {
+    setUpdating(true);
+    try {
+      await adminApi.updateOrderStatus(id, status);
+      setOrder((current) => ({ ...current, status }));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return (
+    <AdminGuard>
+      <AdminShell>
+        <header className="admin-header">
+          <div>
+            <p className="eyebrow">SALES</p>
+            <h1>Order details</h1>
+          </div>
+
+          <Link className="text-button" to="/admin/orders">
+            ← Back to orders
+          </Link>
+        </header>
+
+        <ErrorNotice message={error} />
+
+        {!order && !error && <p>Loading…</p>}
+
+        {order && (
+          <div className="admin-order-detail">
+            <section className="admin-detail-block">
+              <h2>Order info</h2>
+              <div className="admin-detail-grid">
+                <div>
+                  <span>Order ID</span>
+                  <b>{order.id}</b>
+                </div>
+                <div>
+                  <span>Placed on</span>
+                  <b>{formatOrderDate2(order.createdAt)}</b>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <select
+                    value={order.status}
+                    disabled={updating}
+                    onChange={(e) => changeStatus(e.target.value)}
+                  >
+                    {['Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'].map(
+                      (s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section className="admin-detail-block">
+              <h2>Payment</h2>
+              <div className="admin-detail-grid">
+                <div>
+                  <span>Payment method</span>
+                  <b>{order.paymentMethod || '—'}</b>
+                </div>
+                <div>
+                  <span>Payment status</span>
+                  <b>{order.paymentStatus || '—'}</b>
+                </div>
+              </div>
+            </section>
+
+            <section className="admin-detail-block">
+              <h2>Pricing</h2>
+              <div className="admin-detail-grid">
+                <div>
+                  <span>Subtotal</span>
+                  <b>AED {order.subtotal}</b>
+                </div>
+                <div>
+                  <span>Shipping</span>
+                  <b>{order.shipping === 0 ? 'Free' : `AED ${order.shipping}`}</b>
+                </div>
+                <div>
+                  <span>Discount</span>
+                  <b>AED {order.discount || 0}</b>
+                </div>
+                <div>
+                  <span>Total</span>
+                  <b>AED {order.total}</b>
+                </div>
+              </div>
+            </section>
+
+            <section className="admin-detail-block">
+              <h2>Shipping address</h2>
+              <div className="admin-detail-grid">
+                <div>
+                  <span>Name</span>
+                  <b>{order.shippingAddress?.fullName || '—'}</b>
+                </div>
+                <div>
+                  <span>Phone</span>
+                  <b>{order.shippingAddress?.phone || '—'}</b>
+                </div>
+                <div>
+                  <span>Building/Villa</span>
+                  <b>{order.shippingAddress?.building || '—'}</b>
+                </div>
+                <div>
+                  <span>Street</span>
+                  <b>{order.shippingAddress?.street || '—'}</b>
+                </div>
+                <div>
+                  <span>Area</span>
+                  <b>{order.shippingAddress?.area || '—'}</b>
+                </div>
+                <div>
+                  <span>City</span>
+                  <b>{order.shippingAddress?.city || '—'}</b>
+                </div>
+                <div>
+                  <span>Emirate</span>
+                  <b>{order.shippingAddress?.emirate || '—'}</b>
+                </div>
+                <div>
+                  <span>Country</span>
+                  <b>{order.shippingAddress?.country || '—'}</b>
+                </div>
+                <div>
+                  <span>Postal Code</span>
+                  <b>{order.shippingAddress?.postalCode || '—'}</b>
+                </div>
+              </div>
+            </section>
+
+            <section className="admin-detail-block">
+              <h2>Items</h2>
+              <div className="admin-table">
+                <div className="admin-row admin-table-head">
+                  <span>Product</span>
+                  <span>SKU</span>
+                  <span>Qty</span>
+                  <span>Unit Price</span>
+                  <span>Line Total</span>
+                </div>
+                {(order.items || []).map((item, i) => (
+                  <div className="admin-row" key={i}>
+                    <span>{item.name}</span>
+                    <span>{item.sku}</span>
+                    <span>{item.quantity}</span>
+                    <span>AED {item.unitPrice}</span>
+                    <span>AED {item.lineTotal}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
       </AdminShell>
     </AdminGuard>
   );
