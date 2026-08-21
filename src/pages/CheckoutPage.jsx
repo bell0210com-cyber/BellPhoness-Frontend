@@ -14,8 +14,17 @@ const formatPrice = (value) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-function OrderSummary({ items }) {
+const FREE_SHIPPING_THRESHOLD = 2000;
+const STANDARD_SHIPPING_FEE = 35;
+
+const isDubai = (emirate) => (emirate || '').trim().toLowerCase() === 'dubai';
+
+function OrderSummary({ items, emirate }) {
   const subtotal = items.reduce((sum, item) => sum + productPrice(item) * item.quantity, 0);
+  const hasEmirate = !!emirate;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
+  const total = subtotal + (hasEmirate ? shipping : 0);
+
   return (
     <aside className="order-summary">
       <h2>Order summary</h2>
@@ -25,13 +34,23 @@ function OrderSummary({ items }) {
       </p>
       <p>
         <span>Shipping</span>
-        <b>At checkout</b>
+        <b>
+          {!hasEmirate
+            ? 'At checkout'
+            : shipping === 0
+            ? 'Free'
+            : formatPrice(shipping)}
+        </b>
       </p>
       <p className="total">
         <span>Total</span>
-        <b>{formatPrice(subtotal)}</b>
+        <b>{formatPrice(total)}</b>
       </p>
-      <small>Final pricing, shipping, and any discounts are confirmed during checkout.</small>
+      <small>
+        {subtotal < FREE_SHIPPING_THRESHOLD
+          ? `Add ${formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)} more to get free shipping.`
+          : 'You qualify for free shipping.'}
+      </small>
     </aside>
   );
 }
@@ -116,6 +135,8 @@ export default function CheckoutPage() {
 
   const updateAddress = (key, value) => setAddress((current) => ({ ...current, [key]: value }));
 
+  const dubaiOrder = isDubai(address.emirate);
+
   const placeOrder = async () => {
     const auth = getAuth();
     if (!auth.currentUser) {
@@ -150,6 +171,12 @@ export default function CheckoutPage() {
           <span>✦</span>
           <h2>Thank you for your order</h2>
           <p>Your order reference is {orderId}. You can track its status from your account.</p>
+          {!dubaiOrder && (
+            <p>
+              Since this order is outside Dubai, our team will contact you shortly to arrange
+              prepayment before your order is shipped.
+            </p>
+          )}
           <Link className="button button-gold" to="/orders">
             View my orders <span>→</span>
           </Link>
@@ -176,6 +203,16 @@ export default function CheckoutPage() {
   }
 
   const steps = ['Address', 'Delivery', 'Payment', 'Confirm'];
+
+  const deliveryText = !address.emirate
+    ? 'Standard delivery across the UAE. Delivery time is confirmed after order confirmation.'
+    : dubaiOrder
+    ? 'Delivery within Dubai typically takes 2-3 business days.'
+    : 'Delivery outside Dubai typically takes 5-7 business days.';
+
+  const paymentText = dubaiOrder
+    ? 'Cash on delivery is available for orders within Dubai. Online payment options are coming soon.'
+    : 'Orders outside Dubai require prepayment before shipping. Our team will contact you after you place your order to arrange payment. Online payment options are coming soon.';
 
   return (
     <>
@@ -205,7 +242,7 @@ export default function CheckoutPage() {
           {step === 2 && (
             <InfoStep
               title="Delivery preferences"
-              text="Standard delivery across the UAE. Delivery time is confirmed after order confirmation."
+              text={deliveryText}
               next={() => setStep(3)}
               button="Continue to payment"
             />
@@ -214,7 +251,7 @@ export default function CheckoutPage() {
           {step === 3 && (
             <InfoStep
               title="Payment method"
-              text="Cash on delivery is currently supported. Online payment providers will be added soon."
+              text={paymentText}
               next={() => setStep(4)}
               button="Review order"
             />
@@ -223,7 +260,11 @@ export default function CheckoutPage() {
           {step === 4 && (
             <InfoStep
               title="Review your order"
-              text="Confirm your order below. Payment will be collected on delivery."
+              text={
+                dubaiOrder
+                  ? 'Confirm your order below. Payment will be collected on delivery.'
+                  : 'Confirm your order below. Our team will contact you to arrange prepayment before shipping.'
+              }
               next={placeOrder}
               button="Place order"
               disabled={placing}
@@ -231,7 +272,7 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        <OrderSummary items={cart} />
+        <OrderSummary items={cart} emirate={address.emirate} />
       </section>
     </>
   );

@@ -1324,7 +1324,7 @@ export function AdminOrdersPage() {
 
           {orders.map((order) => (
             <div className="admin-row" key={order.id}>
-              <span>{order.id}</span>
+              <span><Link to={`/admin/orders/${order.id}`}>{order.id}</Link></span>
               <span>
                 {order.shippingAddress?.fullName ||
                   order.customerName ||
