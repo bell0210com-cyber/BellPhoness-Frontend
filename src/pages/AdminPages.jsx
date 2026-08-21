@@ -1065,6 +1065,7 @@ export function AdminSimplePage({
 
 export function AdminCustomersPage() {
   const [customers, setCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [error, setError] = useState('');
   const [loadingCustomers, setLoadingCustomers] = useState(true);
 
@@ -1075,7 +1076,6 @@ export function AdminCustomersPage() {
       return;
     }
     // Real-time Firestore listener — updates instantly when new customers sign up
-    // NOTE: No orderBy so documents without createdAt are NOT skipped
     const q = query(collection(db, 'customers'));
     const unsub = onSnapshot(
       q,
@@ -1101,7 +1101,23 @@ export function AdminCustomersPage() {
         setLoadingCustomers(false);
       }
     );
-    return unsub;
+
+    // Real-time Firestore listener for orders to dynamically calculate counts
+    const qOrders = query(collection(db, 'orders'));
+    const unsubOrders = onSnapshot(
+      qOrders,
+      (snapshot) => {
+        setOrders(snapshot.docs.map((docSnap) => docSnap.data()));
+      },
+      (err) => {
+        console.error('Failed to load orders for counts:', err.message);
+      }
+    );
+
+    return () => {
+      unsub();
+      unsubOrders();
+    };
   }, []);
 
   return (
@@ -1128,21 +1144,24 @@ export function AdminCustomersPage() {
               <span>Joined</span>
             </div>
 
-            {customers.map((customer) => (
-              <div className="admin-row" key={customer.id}>
-                <span>{customer.name || '—'}</span>
-                <span>{customer.email || '—'}</span>
-                <span>{customer.phone || '—'}</span>
-                <span>{customer.orderCount ?? 0}</span>
-                <span>
-                  {customer.createdAt instanceof Date
-                    ? customer.createdAt.toLocaleDateString()
-                    : customer.createdAt
-                      ? new Date(customer.createdAt).toLocaleDateString()
-                      : '—'}
-                </span>
-              </div>
-            ))}
+            {customers.map((customer) => {
+              const orderCount = orders.filter((o) => o.userId === customer.id || o.shippingAddress?.email === customer.email).length;
+              return (
+                <div className="admin-row" key={customer.id}>
+                  <span>{customer.name || '—'}</span>
+                  <span>{customer.email || '—'}</span>
+                  <span>{customer.phone || '—'}</span>
+                  <span>{orderCount}</span>
+                  <span>
+                    {customer.createdAt instanceof Date
+                      ? customer.createdAt.toLocaleDateString()
+                      : customer.createdAt
+                        ? new Date(customer.createdAt).toLocaleDateString()
+                        : '—'}
+                  </span>
+                </div>
+              );
+            })}
 
             {!customers.length && !error && (
               <div className="admin-empty">No customers yet.</div>

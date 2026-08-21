@@ -135,6 +135,7 @@ export function AuthPage({ type }) {
         await registerWithEmail({
           name: values.name,
           email: values.email,
+          phone: values.phone,
           password: values.password,
         });
 
