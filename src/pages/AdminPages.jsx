@@ -5,7 +5,7 @@ import {
   signOut,
   getIdTokenResult
 } from 'firebase/auth';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import Seo from '../components/Seo';
@@ -80,61 +80,49 @@ const AdminGuard = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    const checkAdminAccess = async () => {
+    if (!firebaseClientReady) {
+      setStatus('unauthorized');
+      return;
+    }
+
+    const auth = getAuth();
+
+    // IMPORTANT: Use onAuthStateChanged so we WAIT for Firebase to restore
+    // the session from localStorage before checking claims.
+    // Without this, auth.currentUser is null on page refresh.
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!mounted) return;
+
+      if (!user) {
+        setStatus('unauthorized');
+        return;
+      }
+
       try {
-        if (!firebaseClientReady) {
-          if (mounted) {
-            setStatus('unauthorized');
-          }
-          return;
-        }
-
-        const auth = getAuth();
-        const user = auth.currentUser;
-
-        if (!user) {
-          if (mounted) {
-            setStatus('unauthorized');
-          }
-          return;
-        }
-
-        const tokenResult = await getIdTokenResult(user, true);
-
+        // DO NOT pass `true` here. Forcing a token refresh on every page 
+        // load can cause network timeouts/errors which incorrectly log the user out.
+        // Firebase automatically refreshes tokens in the background when they expire.
+        const tokenResult = await getIdTokenResult(user);
         const isAdmin = tokenResult.claims?.admin === true;
 
         if (!isAdmin) {
           await signOut(auth);
-
-          if (mounted) {
-            setStatus('unauthorized');
-          }
-
+          if (mounted) setStatus('unauthorized');
           return;
         }
 
-        if (mounted) {
-          setStatus('authorized');
-        }
+        if (mounted) setStatus('authorized');
       } catch (error) {
         console.error('Admin authentication check failed:', error);
-
-        try {
-          await signOut(getAuth());
-        } catch {
-          // Ignore sign-out errors.
-        }
-
-        if (mounted) {
-          setStatus('unauthorized');
-        }
+        // Don't sign out on network errors checking claims!
+        // Just set unauthorized for now.
+        if (mounted) setStatus('unauthorized');
       }
-    };
-
-    checkAdminAccess();
+    });
 
     return () => {
       mounted = false;
+      unsubscribe();
     };
   }, []);
 
@@ -1087,16 +1075,24 @@ export function AdminCustomersPage() {
       return;
     }
     // Real-time Firestore listener — updates instantly when new customers sign up
-    const q = query(collection(db, 'customers'), orderBy('createdAt', 'desc'));
+    // NOTE: No orderBy so documents without createdAt are NOT skipped
+    const q = query(collection(db, 'customers'));
     const unsub = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-          // normalize Firestore Timestamp to JS Date
-          createdAt: docSnap.data().createdAt?.toDate?.() ?? docSnap.data().createdAt,
-        }));
+        const data = snapshot.docs
+          .map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+            // normalize Firestore Timestamp to JS Date
+            createdAt: docSnap.data().createdAt?.toDate?.() ?? docSnap.data().createdAt,
+          }))
+          // sort newest first client-side (handles missing createdAt gracefully)
+          .sort((a, b) => {
+            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return bTime - aTime;
+          });
         setCustomers(data);
         setLoadingCustomers(false);
       },

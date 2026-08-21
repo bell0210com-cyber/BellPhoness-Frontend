@@ -22,12 +22,10 @@ export function ProductsProvider({ children }) {
     };
   }, []);
 
-  const allProducts = [...staticProducts, ...liveProducts];
-
   const value = {
-    products: allProducts,
+    products: liveProducts,
     loading,
-    getProduct: (id) => allProducts.find((p) => p.id === id),
+    getProduct: (id) => liveProducts.find((p) => p.id === id),
   };
 
   return (
