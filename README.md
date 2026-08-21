@@ -19,6 +19,13 @@
 
 ---
 
+## 🌐 Live Links
+
+- **Main Website:** [bellphoness.com](https://bellphoness.com)
+- **Admin Panel:** [admin.bellphoness.com](https://admin.bellphoness.com)
+
+---
+
 ## ✨ Features
 
 | Feature | Description |
