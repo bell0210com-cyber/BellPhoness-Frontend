@@ -15,6 +15,39 @@ const formatPrice = (value) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+const COLOR_MAP = {
+  'Deep Purple': '#4c3959',
+  'Silver': '#e2e4e1',
+  'Gold': '#fcebd5',
+  'Space Black': '#28272a',
+  'Natural Titanium': '#c1c1c1',
+  'Black Titanium': '#2e2e2e',
+  'White Titanium': '#f2f2f2',
+  'Blue Titanium': '#444a57',
+  'Desert Titanium': '#c1a690',
+  'Midnight Green': '#4e5851',
+  'Space Gray': '#4d4d4d',
+  'Graphite': '#5c5b57',
+  'Pacific Blue': '#2c4157',
+  'Sierra Blue': '#9bb5ce',
+  'Alpine Green': '#576856',
+  'Starlight': '#f9f6ef',
+  'Midnight': '#171e27',
+  'Blue': '#376288',
+  'Pink': '#fadee5',
+  'Red': '#c72333',
+  'Yellow': '#fae57c',
+  'Green': '#aee0cd',
+  'Purple': '#d2d3ec',
+  'White': '#fbf9f4',
+  'Black': '#1f2020',
+  'Coral': '#fc6554',
+  'Rose Gold': '#fad8d2',
+  'Jet Black': '#0a0a0a',
+  'Teal': '#7da0a2',
+  'Ultramarine': '#4d5b94'
+};
+
 export default function ProductPage() {
   const { id } = useParams();
   const { products, getProduct } = useProducts();
@@ -66,7 +99,7 @@ export default function ProductPage() {
       Object.entries(selected).every(([key, value]) => !value || v[key] === value)
     ) || firstVariant;
 
-  const images = currentVariant.images?.length ? currentVariant.images : product.images;
+  const images = currentVariant.images?.length ? currentVariant.images : (product.variants?.[0]?.images || ['/placeholder.png']);
 
   const variantFields = [
     ['color', 'Color'],
@@ -79,7 +112,7 @@ export default function ProductPage() {
     ...new Map(variants.filter((v) => v[key]).map((v) => [v[key], v])).entries(),
   ].map(([value, v]) => ({
     value,
-    hex: key === 'color' ? v.colorHex : undefined,
+    hex: key === 'color' ? (COLOR_MAP[value] || v.colorHex || '#ddd') : undefined,
     available: variants.some(
       (v2) =>
         v2[key] === value &&
@@ -206,7 +239,7 @@ export default function ProductPage() {
               className="button button-gold"
               disabled={!currentVariant.stock}
               onClick={(e) => {
-                import('../utils/animateToCart').then(m => m.animateToCart(e, (currentVariant.images || product.images)[0]));
+                import('../utils/animateToCart').then(m => m.animateToCart(e, (currentVariant.images?.[0] || product.variants?.[0]?.images?.[0] || '/placeholder.png')));
                 addToCart(product, currentVariant, quantity);
               }}
             >
@@ -258,7 +291,7 @@ export default function ProductPage() {
           </h2>
           <div className="spec-table">
             {Object.entries({
-              ...product.specs,
+              ...(product.specs || {}),
               ...(currentVariant.color ? { Color: currentVariant.color } : {}),
               ...(currentVariant.ram ? { RAM: currentVariant.ram } : {}),
               ...(currentVariant.storage ? { Storage: currentVariant.storage } : {}),
