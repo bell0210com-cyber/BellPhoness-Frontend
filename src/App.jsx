@@ -45,14 +45,22 @@ import {
   AdminReviewsPage,
 } from './pages/AdminPages';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathname]);
+    
+    // Auto-redirect admin subdomain root to the admin login page
+    if (window.location.hostname.startsWith('admin') && pathname === '/') {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [pathname, navigate]);
+  
   return null;
 }
 
