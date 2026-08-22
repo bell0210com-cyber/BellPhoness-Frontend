@@ -45,7 +45,7 @@ const emptyProduct = () => ({
    ADMIN SHELL
 ========================================================= */
 
-const AdminShell = ({ children }) => (
+export const AdminShell = ({ children }) => (
   <div className="admin-shell">
     <aside>
       <Link className="brand" to="/">
@@ -56,6 +56,7 @@ const AdminShell = ({ children }) => (
 
       {[
         ['Dashboard', '/admin/dashboard'],
+        ['Hero Slides', '/admin/hero'],
         ['Products', '/admin/products'],
         ['Orders', '/admin/orders'],
         ['Customers', '/admin/customers'],

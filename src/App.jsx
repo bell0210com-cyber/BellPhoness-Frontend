@@ -45,6 +45,11 @@ import {
   AdminReviewsPage,
 } from './pages/AdminPages';
 
+import {
+  AdminHeroSlidesPage,
+  AdminHeroSlideForm,
+} from './pages/AdminHeroPages';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -239,6 +244,21 @@ export default function App() {
             <Route
               path="/admin/settings"
               element={<AdminSettingsPage />}
+            />
+
+            <Route
+              path="/admin/hero"
+              element={<AdminHeroSlidesPage />}
+            />
+            
+            <Route
+              path="/admin/hero/add"
+              element={<AdminHeroSlideForm />}
+            />
+            
+            <Route
+              path="/admin/hero/edit/:id"
+              element={<AdminHeroSlideForm />}
             />
 
             {/* FALLBACK */}

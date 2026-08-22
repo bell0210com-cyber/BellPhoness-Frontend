@@ -2,6 +2,7 @@ import { useProducts } from '../context/ProductsContext';
 import { Link } from 'react-router-dom';
 import Seo from '../components/Seo';
 import ProductCard from '../components/ProductCard';
+import HeroCarousel from '../components/HeroCarousel';
 
 
 const whyBell = [
@@ -45,36 +46,7 @@ export default function HomePage() {
         description="Discover premium smartphones and technology accessories from BELL, delivered across Dubai."
       />
 
-      <section className="home-hero">
-        <div className="shell home-hero-inner">
-          <div>
-            <p className="eyebrow">BELL / DUBAI</p>
-            <h1>
-              Premium Technology.
-              <br />
-              <em>Simply BELL.</em>
-            </h1>
-            <p>Discover the latest smartphones and premium accessories, delivered across Dubai.</p>
-            <div>
-              <Link className="button button-gold" to="/shop">
-                Shop Now <b>→</b>
-              </Link>
-              <Link className="button button-outline" to="/category/deals">
-                Explore Deals
-              </Link>
-            </div>
-          </div>
-
-          <div className="hero-device">
-            <img src="https://res.cloudinary.com/pkotqxwo/image/upload/v1787350499/aewfzyvxrgfgbjzdggfk.jpg" alt="Premium smartphone" />
-            <span>
-              THE EDIT
-              <br />
-              <b>2026</b>
-            </span>
-          </div>
-        </div>
-      </section>
+      <HeroCarousel />
 
       <ProductSection
         label="FEATURED"
