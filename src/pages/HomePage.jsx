@@ -37,7 +37,12 @@ export default function HomePage() {
   if (featured.length === 0) {
     featured = products.slice(0, 4);
   }
-  const bestsellers = products.filter((p) => p.bestseller).slice(0, 4);
+
+  let bestsellersAndNew = products.filter((p) => p.bestseller || p.isNewArrival).slice(0, 4);
+  if (bestsellersAndNew.length === 0) {
+    // Fallback: show the next 4 products (or just most recent 4)
+    bestsellersAndNew = products.length > 4 ? products.slice(4, 8) : products.slice(0, 4);
+  }
 
   return (
     <>
@@ -83,7 +88,7 @@ export default function HomePage() {
       <ProductSection
         label="NEW & NOTED"
         title={<>New arrivals and <em>bestsellers.</em></>}
-        products={bestsellers}
+        products={bestsellersAndNew}
       />
 
       <section className="why-home">

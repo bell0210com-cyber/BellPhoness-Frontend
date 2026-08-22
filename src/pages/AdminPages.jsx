@@ -807,7 +807,8 @@ export function AdminProductForm() {
             {[
               ['is_active', 'Active'],
               ['featured', 'Featured'],
-              ['bestseller', 'Bestseller']
+              ['bestseller', 'Bestseller'],
+              ['isNewArrival', 'New Arrival']
             ].map(([key, label]) => (
               <label
                 className="admin-check"
