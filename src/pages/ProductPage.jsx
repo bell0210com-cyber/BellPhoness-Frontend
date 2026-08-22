@@ -309,33 +309,67 @@ export default function ProductPage() {
         </div>
       </section>
 
+      {product.boxContents && product.boxContents.length > 0 && (
+        <section className="box-contents-section shell">
+          <p className="eyebrow">UNBOXING</p>
+          <h2>
+            What's <em>included.</em>
+          </h2>
+          <div className="box-contents-grid">
+            {product.boxContents.map((item, idx) => {
+              const lower = item.toLowerCase();
+              let icon = '📦';
+              if (lower.includes('cable') || lower.includes('charger') || lower.includes('adapter')) icon = '🔌';
+              else if (lower.includes('phone') || lower.includes('mobile') || lower.includes('device')) icon = '📱';
+              else if (lower.includes('manual') || lower.includes('guide') || lower.includes('document') || lower.includes('paper')) icon = '📖';
+              else if (lower.includes('case') || lower.includes('cover')) icon = '🛡️';
+              else if (lower.includes('sim') || lower.includes('pin') || lower.includes('ejector')) icon = '📎';
+              else if (lower.includes('earphone') || lower.includes('headphone') || lower.includes('pods')) icon = '🎧';
+
+              return (
+                <div key={idx} className="box-item">
+                  <span className="box-item-icon">{icon}</span>
+                  <span className="box-item-label">{item}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section className="spec-section">
         <div className="shell">
           <p className="eyebrow">TECHNICAL DETAILS</p>
           <h2>
             Product <em>specifications.</em>
           </h2>
-          <div className="spec-table">
-            {Object.entries({
-              ...(product.processor ? { 'Chip/Processor': product.processor } : {}),
-              ...(product.display ? { Display: product.display } : {}),
-              ...(product.camera ? { Camera: product.camera } : {}),
-              ...(product.battery ? { Battery: product.battery } : {}),
-              ...(product.ram ? { 'Base RAM': product.ram } : {}),
-              ...(product.screenSize ? { 'Screen Size': product.screenSize } : {}),
-              ...(product.os ? { 'Operating System': product.os } : {}),
-              ...(product.weight ? { Weight: product.weight } : {}),
-              ...(product.specs || {}),
-              ...(currentVariant.color ? { Color: currentVariant.color } : {}),
-              ...(currentVariant.ram ? { RAM: currentVariant.ram } : {}),
-              ...(currentVariant.storage ? { Storage: currentVariant.storage } : {}),
-              ...(currentVariant.condition ? { Condition: currentVariant.condition } : {}),
-            }).map(([key, value]) => (
-              <div key={key}>
-                <span>{key}</span>
-                <b>{value}</b>
-              </div>
-            ))}
+          
+          <div className="spec-descriptive">
+            {product.specsIntro && (
+              <p className="spec-intro">{product.specsIntro}</p>
+            )}
+            
+            <ul className="spec-bullets">
+              {Object.entries({
+                ...(product.processor ? { 'Chip/Processor': product.processor } : {}),
+                ...(product.display ? { Display: product.display } : {}),
+                ...(product.camera ? { Camera: product.camera } : {}),
+                ...(product.battery ? { Battery: product.battery } : {}),
+                ...(product.ram ? { 'Base RAM': product.ram } : {}),
+                ...(product.screenSize ? { 'Screen Size': product.screenSize } : {}),
+                ...(product.os ? { 'Operating System': product.os } : {}),
+                ...(product.weight ? { Weight: product.weight } : {}),
+                ...(product.specs || {}),
+                ...(currentVariant.color ? { Color: currentVariant.color } : {}),
+                ...(currentVariant.ram ? { RAM: currentVariant.ram } : {}),
+                ...(currentVariant.storage ? { Storage: currentVariant.storage } : {}),
+                ...(currentVariant.condition ? { Condition: currentVariant.condition } : {}),
+              }).map(([key, value]) => (
+                <li key={key}>
+                  <strong>{key}:</strong> {value}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>

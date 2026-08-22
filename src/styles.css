@@ -694,6 +694,201 @@
   object-fit: cover;
 }
 .compact-thumb button {
+  color: var(--accent);
+}
+
+/* =========================================================
+   VARIANT SELECTOR SUBLABELS & CONDITION GUIDE
+========================================================= */
+
+.variant-options.has-sublabels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.text-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #c9c1b6;
+  color: var(--ink);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.text-option:hover:not(:disabled) {
+  border-color: var(--black);
+}
+.text-option.selected {
+  border-color: var(--black);
+  background: #111;
+  color: #fff;
+}
+.text-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.text-option .main-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+.text-option .sub-label {
+  font-size: 11px;
+  color: var(--gold);
+  margin-top: 4px;
+}
+.text-option.selected .sub-label {
+  color: var(--gold-light);
+}
+
+.condition-guide-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.condition-guide-link:hover {
+  color: var(--gold-light);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.modal-content {
+  background: var(--black);
+  color: #fff;
+  padding: 35px 30px;
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.modal-content h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  color: #fff;
+}
+.modal-content p {
+  font-size: 14px;
+  color: #ccc;
+  line-height: 1.6;
+}
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 5px;
+}
+.condition-guide-list {
+  margin-top: 25px;
+  padding-left: 20px;
+}
+.condition-guide-list li {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  color: #ccc;
+  font-size: 14px;
+}
+.condition-guide-list strong {
+  color: var(--gold);
+  font-size: 14px;
+}
+
+/* =========================================================
+   ADMIN VARIANT TABLE UI
+========================================================= */
+
+.admin-variants-table-container {
+  overflow-x: auto;
+  margin-bottom: 30px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+.admin-variants-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+.admin-variants-table th {
+  background: var(--bg-alt);
+  padding: 10px;
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-variants-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+.admin-variants-table input[type="text"],
+.admin-variants-table input[type="number"],
+.admin-variants-table select {
+  width: 100%;
+  min-width: 80px;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-color);
+  color: var(--text);
+  font-size: 14px;
+}
+.compact-image-cell {
+  min-width: 150px;
+}
+.compact-image-cell input[type="file"] {
+  width: 100%;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+.compact-thumbs {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.compact-thumb {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.compact-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.compact-thumb button {
   position: absolute;
   top: 0;
   right: 0;
@@ -715,4 +910,90 @@
 }
 .remove-variant-btn:hover {
   color: #fc6554;
+}
+
+/* =========================================================
+   BOX CONTENTS (WHAT'S INCLUDED)
+========================================================= */
+.box-contents-section {
+  padding: 80px 0;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+}
+.box-contents-grid {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+}
+.box-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  padding: 32px 24px;
+  border-radius: 12px;
+  min-width: 140px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.box-item:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-color);
+}
+.box-item-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+.box-item-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* =========================================================
+   DESCRIPTIVE SPECS
+========================================================= */
+.spec-descriptive {
+  margin-top: 40px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.spec-intro {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #a0a0a0;
+  margin-bottom: 40px;
+}
+.spec-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.spec-bullets li {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-color);
+  padding-left: 32px;
+  position: relative;
+}
+.spec-bullets li::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  color: var(--accent-color);
+  font-size: 14px;
+  top: 2px;
+}
+.spec-bullets li strong {
+  color: #fff;
+  font-weight: 600;
+  margin-right: 8px;
 }

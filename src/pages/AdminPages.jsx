@@ -833,6 +833,24 @@ export function AdminProductForm() {
               <p className="eyebrow">SPECIFICATIONS</p>
               <h2>Technical Details</h2>
             </div>
+            
+            <label className="full-field">
+              Introductory Paragraph (Optional)
+              <textarea
+                value={product.specsIntro || ''}
+                onChange={(event) => update('specsIntro', event.target.value)}
+                placeholder="The iPhone 11 combines advanced technology..."
+              />
+            </label>
+
+            <label className="full-field">
+              What's Included in the Box? (Comma separated)
+              <input
+                value={Array.isArray(product.boxContents) ? product.boxContents.join(', ') : ''}
+                onChange={(event) => update('boxContents', event.target.value.split(',').map(s => s.trim()))}
+                placeholder="e.g. Phone, Charging Cable, Manual"
+              />
+            </label>
 
             {[
               ['processor', 'Chip/Processor (e.g. A14 Bionic)'],
