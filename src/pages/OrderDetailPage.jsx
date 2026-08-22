@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { doc, onSnapshot } from 'firebase/firestore';
 import PageHero from '../components/PageHero';
 import Seo from '../components/Seo';
-import { orderApi } from '../services/orderApi';
-
+import { db } from '../services/firebaseClient';
 import ReviewForm from '../components/ReviewForm';
 
 const formatPrice = (value) =>
@@ -22,7 +22,22 @@ export default function OrderDetailPage() {
   const [reviewingProduct, setReviewingProduct] = useState(null);
 
   useEffect(() => {
-    orderApi.get(id).then(setOrder).catch((e) => setError(e.message));
+    const unsubscribe = onSnapshot(
+      doc(db, 'orders', id),
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          setError('Order not found');
+        } else {
+          setOrder({ id: snapshot.id, ...snapshot.data() });
+          setError('');
+        }
+      },
+      (err) => {
+        setError('Failed to load order: ' + err.message);
+      }
+    );
+
+    return () => unsubscribe();
   }, [id]);
 
   if (error) {

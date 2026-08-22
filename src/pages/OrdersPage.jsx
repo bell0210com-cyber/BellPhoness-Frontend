@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import PageHero from '../components/PageHero';
 import Seo from '../components/Seo';
-import { orderApi } from '../services/orderApi';
+import { db } from '../services/firebaseClient';
+import { useAuth } from '../context/AuthContext';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -12,17 +14,48 @@ const formatPrice = (value) =>
   }).format(value);
 
 export default function OrdersPage() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    orderApi
-      .list()
-      .then(setOrders)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'orders'),
+      where('userId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const fetchedOrders = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        
+        // Sort by createdAt descending (newest first)
+        fetchedOrders.sort((a, b) => {
+          const tA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+          const tB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+          return tB - tA;
+        });
+
+        setOrders(fetchedOrders);
+        setLoading(false);
+      },
+      (err) => {
+        setError('Failed to load orders: ' + err.message);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   return (
     <>
