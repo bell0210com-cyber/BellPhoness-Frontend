@@ -299,6 +299,201 @@
   gap: 10px;
   font-size: 12px;
 }
+}
+
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+
+.phone-input-container {
+  margin-top: 5px;
+}
+.phone-input-container .form-control {
+  width: 100% !important;
+  border: 0 !important;
+  border-bottom: 1px solid #b7aea1 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 10px 0 10px 48px !important;
+  font: 13px Manrope !important;
+  color: #111 !important;
+  outline: 0 !important;
+}
+.phone-input-container .flag-dropdown {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid #b7aea1 !important;
+  border-radius: 0 !important;
+}
+.phone-input-container .selected-flag {
+  background: transparent !important;
+}
+.phone-input-container .selected-flag:hover {
+  background: transparent !important;
+}
+.phone-input-container .country-list {
+  background: #f0ede7 !important;
+  border-radius: 12px !important;
+  border: 1px solid #d8d1c8 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+
+.basket-layout .empty-state {
+  grid-column: 1 / -1; /* Stretch across the entire grid horizontally */
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+
+.empty-state {
+  padding: 80px 20px;
+}
+
+
+/* Account link skeleton while auth loads */
+.account-skeleton {
+  display: inline-block;
+  width: 52px;
+  height: 10px;
+  background: linear-gradient(90deg, #d4c9bb 25%, #e8e2da 50%, #d4c9bb 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s infinite;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* =========================================================
+   REVIEWS SYSTEM
+========================================================= */
+
+.review-form {
+  background: var(--bg-alt);
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  margin-top: 15px;
+  width: 100%;
+}
+.review-form h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+.star-rating-input {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+.star-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.star-btn:hover, .star-btn.active {
+  color: var(--accent);
+}
+.review-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 15px;
+}
+.review-form input, .review-form textarea {
+  margin-top: 5px;
+  padding: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-color);
+  color: var(--text);
+  font-family: inherit;
+}
+.review-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.reviews-section {
+  padding-top: 60px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 60px;
+}
+.reviews-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+.reviews-summary strong {
+  font-size: 32px;
+  color: var(--accent);
+}
+.reviews-summary span {
+  font-size: 14px;
+  color: #888;
+}
+
+.reviews-list {
+  display: grid;
+  gap: 20px;
+}
+.review-card {
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-alt);
+}
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.review-stars .star {
+  color: #555;
+  font-size: 16px;
+}
+.review-stars .star.filled {
+  color: var(--accent);
+}
+.review-date {
+  font-size: 12px;
+  color: #888;
+}
+.review-title {
+  font-size: 16px;
+  margin: 0 0 5px 0;
+}
+.review-text {
+  font-size: 14px;
+  color: #bbb;
+  margin: 0 0 15px 0;
+}
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
 .author-name {
   font-weight: 500;
   text-transform: uppercase;
@@ -306,4 +501,199 @@
 }
 .verified-badge {
   color: var(--accent);
+}
+
+/* =========================================================
+   VARIANT SELECTOR SUBLABELS & CONDITION GUIDE
+========================================================= */
+
+.variant-options.has-sublabels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.text-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-color);
+  color: var(--text);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.text-option:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.text-option.selected {
+  border-color: var(--accent);
+  background: rgba(212, 201, 187, 0.1);
+}
+.text-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.text-option .main-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+.text-option .sub-label {
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.condition-guide-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.condition-guide-link:hover {
+  color: #fff;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: var(--bg);
+  padding: 30px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 24px;
+  cursor: pointer;
+}
+.condition-guide-list {
+  margin-top: 20px;
+  padding-left: 20px;
+}
+.condition-guide-list li {
+  margin-bottom: 15px;
+  line-height: 1.5;
+  color: #ccc;
+}
+.condition-guide-list strong {
+  color: var(--accent);
+}
+
+/* =========================================================
+   ADMIN VARIANT TABLE UI
+========================================================= */
+
+.admin-variants-table-container {
+  overflow-x: auto;
+  margin-bottom: 30px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+.admin-variants-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+.admin-variants-table th {
+  background: var(--bg-alt);
+  padding: 10px;
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-variants-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+.admin-variants-table input[type="text"],
+.admin-variants-table input[type="number"],
+.admin-variants-table select {
+  width: 100%;
+  min-width: 80px;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-color);
+  color: var(--text);
+  font-size: 14px;
+}
+.compact-image-cell {
+  min-width: 150px;
+}
+.compact-image-cell input[type="file"] {
+  width: 100%;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+.compact-thumbs {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.compact-thumb {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.compact-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.compact-thumb button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.remove-variant-btn {
+  font-size: 20px;
+  color: #888;
+  padding: 0 10px;
+}
+.remove-variant-btn:hover {
+  color: #fc6554;
 }

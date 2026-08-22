@@ -71,6 +71,7 @@ export default function ProductPage() {
   );
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [showConditionGuide, setShowConditionGuide] = useState(false);
 
   useEffect(() => {
     if (firstVariant) {
@@ -111,15 +112,29 @@ export default function ProductPage() {
 
   const optionsFor = (key) => [
     ...new Map(variants.filter((v) => v[key]).map((v) => [v[key], v])).entries(),
-  ].map(([value, v]) => ({
-    value,
-    hex: key === 'color' ? (COLOR_MAP[value] || v.colorHex || '#ddd') : undefined,
-    available: variants.some(
-      (v2) =>
-        v2[key] === value &&
-        Object.entries(selected).every(([k, val]) => k === key || !val || v2[k] === val)
-    ),
-  }));
+  ].map(([value, v]) => {
+    let subLabel = undefined;
+    if (key === 'condition') {
+      const match = variants.find((v2) => 
+        v2.condition === value &&
+        (!selected.color || v2.color === selected.color) &&
+        (!selected.storage || v2.storage === selected.storage) &&
+        (!selected.ram || v2.ram === selected.ram)
+      );
+      if (match) subLabel = formatPrice(match.salePrice || match.price);
+    }
+    
+    return {
+      value,
+      subLabel,
+      hex: key === 'color' ? (COLOR_MAP[value] || v.colorHex || '#ddd') : undefined,
+      available: variants.some(
+        (v2) =>
+          v2[key] === value &&
+          Object.entries(selected).every(([k, val]) => k === key || !val || v2[k] === val)
+      ),
+    };
+  });
 
   const selectOption = (key, value) => {
     const match = variants.find(
@@ -206,18 +221,28 @@ export default function ProductPage() {
 
           <p className="description">{product.description}</p>
 
-          <div className="variant-groups">
-            {variantFields.map(([key, label]) => (
-              <VariantSelector
-                key={key}
-                label={label}
-                type={key === 'color' ? 'color' : 'button'}
-                selected={selected[key]}
-                options={optionsFor(key)}
-                onSelect={(value) => selectOption(key, value)}
-              />
-            ))}
-          </div>
+              <div className="product-selectors">
+                {variantFields.map(([key, label]) => (
+                  <div key={key} style={{ position: 'relative' }}>
+                    <VariantSelector
+                      type={key}
+                      label={label}
+                      options={optionsFor(key)}
+                      selected={selected[key]}
+                      onSelect={(value) => selectOption(key, value)}
+                    />
+                    {key === 'condition' && (
+                      <button 
+                        type="button" 
+                        className="condition-guide-link"
+                        onClick={() => setShowConditionGuide(true)}
+                      >
+                        Condition Guide
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
 
           <p className={currentVariant.stock ? 'stock' : 'out-of-stock'}>{stockLabel}</p>
 
@@ -328,6 +353,29 @@ export default function ProductPage() {
             ))}
           </div>
         </section>
+      )}
+      {showConditionGuide && (
+        <div className="modal-overlay" onClick={() => setShowConditionGuide(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowConditionGuide(false)}>×</button>
+            <h2>Condition Guide</h2>
+            <p>Our refurbished devices undergo rigorous testing to ensure 100% functionality. Choose the cosmetic condition that fits your budget:</p>
+            <ul className="condition-guide-list">
+              <li>
+                <strong>Excellent:</strong> Flawless or near-flawless screen and body. Looks almost brand new from arm's length.
+              </li>
+              <li>
+                <strong>Very Good:</strong> Light scratches or minor scuffs visible up close, but invisible when the screen is on.
+              </li>
+              <li>
+                <strong>Good:</strong> Noticeable signs of wear, such as deeper scratches or dents, but fully functional. Best value!
+              </li>
+              <li>
+                <strong>New:</strong> Brand new, sealed in the original manufacturer packaging.
+              </li>
+            </ul>
+          </div>
+        </div>
       )}
     </>
   );

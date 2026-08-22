@@ -839,163 +839,62 @@ export function AdminProductForm() {
               </h2>
             </div>
 
-            {product.variants.map(
-              (variant, index) => (
-                <fieldset
-                  key={variant.id}
-                >
-                  <legend>
-                    Variant {index + 1}
-                  </legend>
-
-                  <div className="variant-form-grid">
-                    {[
-                      ['color', 'Color'],
-                      ['colorHex', 'Color Hex'],
-                      ['ram', 'RAM'],
-                      ['storage', 'Storage'],
-                      ['condition', 'Condition'],
-                      ['sku', 'SKU'],
-                      ['price', 'Price'],
-                      ['salePrice', 'Sale Price'],
-                      ['stock', 'Stock']
-                    ].map(
-                      ([key, label]) => (
-                        <label key={key}>
-                          {label}
-
-                          <input
-                            required={[
-                              'sku',
-                              'price',
-                              'stock'
-                            ].includes(key)}
-                            type={[
-                              'price',
-                              'salePrice',
-                              'stock'
-                            ].includes(key)
-                              ? 'number'
-                              : 'text'}
-                            min={
-                              key === 'stock'
-                                ? 0
-                                : undefined
-                            }
-                            value={
-                              variant[key] ?? ''
-                            }
-                            onChange={(event) =>
-                              changeVariant(
-                                index,
-                                key,
-                                event.target
-                                  .value
-                              )
-                            }
-                          />
-                        </label>
-                      )
-                    )}
-                  </div>
-
-                  <div className="variant-image-upload">
-                    <label>
-                      Images
-
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(event) =>
-                          handleImageUpload(
-                            index,
-                            event.target
-                              .files[0]
-                          )
-                        }
-                        disabled={
-                          uploadingIndex ===
-                          index
-                        }
-                      />
-                    </label>
-
-                    {uploadingIndex ===
-                      index && (
-                      <p>
-                        Uploading…
-                      </p>
-                    )}
-
-                    <div className="variant-image-preview">
-                      {(
-                        variant.images ||
-                        []
-                      ).map(
-                        (
-                          img,
-                          imgIndex
-                        ) => (
-                          <div
-                            key={img}
-                            className="variant-image-thumb"
-                          >
-                            <img
-                              src={img}
-                              alt={`Variant ${
-                                index + 1
-                              } image ${
-                                imgIndex + 1
-                              }`}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                removeImage(
-                                  index,
-                                  imgIndex
-                                )
-                              }
-                            >
-                              ×
-                            </button>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() =>
-                      setProduct(
-                        (current) => ({
-                          ...current,
-
-                          variants:
-                            current.variants.filter(
-                              (
-                                _,
-                                position
-                              ) =>
-                                position !==
-                                index
-                            )
-                        })
-                      )
-                    }
-                    disabled={
-                      product.variants
-                        .length === 1
-                    }
-                  >
-                    Remove variant
-                  </button>
-                </fieldset>
-              )
-            )}
+            <div className="admin-variants-table-container">
+              <table className="admin-variants-table">
+                <thead>
+                  <tr>
+                    <th>Color</th>
+                    <th>Hex</th>
+                    <th>RAM</th>
+                    <th>Storage</th>
+                    <th>Condition</th>
+                    <th>SKU*</th>
+                    <th>Price*</th>
+                    <th>Sale Price</th>
+                    <th>Stock*</th>
+                    <th>Images</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {product.variants.map((variant, index) => (
+                    <tr key={variant.id || index}>
+                      <td><input type="text" value={variant.color ?? ''} onChange={e => changeVariant(index, 'color', e.target.value)} placeholder="e.g. Blue" /></td>
+                      <td><input type="text" value={variant.colorHex ?? ''} onChange={e => changeVariant(index, 'colorHex', e.target.value)} placeholder="#000" /></td>
+                      <td><input type="text" value={variant.ram ?? ''} onChange={e => changeVariant(index, 'ram', e.target.value)} placeholder="8GB" /></td>
+                      <td><input type="text" value={variant.storage ?? ''} onChange={e => changeVariant(index, 'storage', e.target.value)} placeholder="256GB" /></td>
+                      <td>
+                        <select value={variant.condition ?? ''} onChange={e => changeVariant(index, 'condition', e.target.value)}>
+                          <option value="">-</option>
+                          <option value="Excellent">Excellent</option>
+                          <option value="Very Good">Very Good</option>
+                          <option value="Good">Good</option>
+                          <option value="New">New</option>
+                        </select>
+                      </td>
+                      <td><input required type="text" value={variant.sku ?? ''} onChange={e => changeVariant(index, 'sku', e.target.value)} /></td>
+                      <td><input required type="number" min="0" value={variant.price ?? ''} onChange={e => changeVariant(index, 'price', e.target.value)} /></td>
+                      <td><input type="number" min="0" value={variant.salePrice ?? ''} onChange={e => changeVariant(index, 'salePrice', e.target.value)} /></td>
+                      <td><input required type="number" min="0" value={variant.stock ?? ''} onChange={e => changeVariant(index, 'stock', e.target.value)} /></td>
+                      <td className="compact-image-cell">
+                        <input type="file" accept="image/*" onChange={e => handleImageUpload(index, e.target.files[0])} disabled={uploadingIndex === index} title="Upload Image" />
+                        <div className="compact-thumbs">
+                          {(variant.images || []).map((img, imgIndex) => (
+                            <div key={img} className="compact-thumb">
+                              <img src={img} alt="" />
+                              <button type="button" onClick={() => removeImage(index, imgIndex)}>×</button>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td>
+                        <button type="button" className="text-button remove-variant-btn" onClick={() => setProduct(curr => ({...curr, variants: curr.variants.filter((_, p) => p !== index)}))} disabled={product.variants.length === 1} title="Remove variant">×</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <button
               type="button"
