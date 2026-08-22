@@ -517,19 +517,20 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  background: var(--bg-alt);
-  border: 1px solid var(--border-color);
-  color: var(--text);
+  background: transparent;
+  border: 1px solid #c9c1b6;
+  color: var(--ink);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .text-option:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--black);
 }
 .text-option.selected {
-  border-color: var(--accent);
-  background: rgba(212, 201, 187, 0.1);
+  border-color: var(--black);
+  background: #111;
+  color: #fff;
 }
 .text-option:disabled {
   opacity: 0.5;
@@ -537,13 +538,16 @@
   text-decoration: line-through;
 }
 .text-option .main-label {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
 }
 .text-option .sub-label {
-  font-size: 12px;
-  color: var(--accent);
+  font-size: 11px;
+  color: var(--gold);
   margin-top: 4px;
+}
+.text-option.selected .sub-label {
+  color: var(--gold-light);
 }
 
 .condition-guide-link {
@@ -552,14 +556,14 @@
   right: 0;
   background: none;
   border: none;
-  color: var(--accent);
-  font-size: 12px;
+  color: var(--gold);
+  font-size: 11px;
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
 }
 .condition-guide-link:hover {
-  color: #fff;
+  color: var(--gold-light);
 }
 
 .modal-overlay {
@@ -568,20 +572,32 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10000;
 }
 .modal-content {
-  background: var(--bg);
-  padding: 30px;
-  border: 1px solid var(--accent);
+  background: var(--black);
+  color: #fff;
+  padding: 35px 30px;
+  border: 1px solid var(--gold);
   border-radius: 8px;
   max-width: 500px;
   width: 90%;
   position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.modal-content h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  color: #fff;
+}
+.modal-content p {
+  font-size: 14px;
+  color: #ccc;
+  line-height: 1.6;
 }
 .modal-close {
   position: absolute;
@@ -589,21 +605,25 @@
   right: 15px;
   background: none;
   border: none;
-  color: var(--text);
+  color: #fff;
   font-size: 24px;
+  line-height: 1;
   cursor: pointer;
+  padding: 5px;
 }
 .condition-guide-list {
-  margin-top: 20px;
+  margin-top: 25px;
   padding-left: 20px;
 }
 .condition-guide-list li {
   margin-bottom: 15px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #ccc;
+  font-size: 14px;
 }
 .condition-guide-list strong {
-  color: var(--accent);
+  color: var(--gold);
+  font-size: 14px;
 }
 
 /* =========================================================
