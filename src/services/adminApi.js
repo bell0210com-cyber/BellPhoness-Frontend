@@ -59,5 +59,19 @@ export const adminApi = {
     request('/api/admin/settings', {
       method: 'PUT',
       body: JSON.stringify(settings)
-    })
+    }),
+
+  heroSlides: () => request('/api/admin/hero-slides'),
+  heroSlide: (id) => request(`/api/admin/hero-slides/${id}`),
+  createHeroSlide: (slide) =>
+    request('/api/admin/hero-slides', {
+      method: 'POST',
+      body: JSON.stringify(slide)
+    }),
+  updateHeroSlide: (id, slide) =>
+    request(`/api/admin/hero-slides/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(slide)
+    }),
+  deleteHeroSlide: (id) => request(`/api/admin/hero-slides/${id}`, { method: 'DELETE' })
 };

@@ -15,7 +15,7 @@ export function AdminHeroSlidesPage() {
 
   const fetchSlides = async () => {
     try {
-      const data = await adminApi('/api/admin/hero-slides');
+      const data = await adminApi.heroSlides();
       setSlides(data);
     } catch (err) {
       console.error(err);
@@ -27,10 +27,7 @@ export function AdminHeroSlidesPage() {
 
   const toggleActive = async (id, currentStatus) => {
     try {
-      await adminApi(`/api/admin/hero-slides/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ isActive: !currentStatus }),
-      });
+      await adminApi.updateHeroSlide(id, { isActive: !currentStatus });
       fetchSlides();
     } catch (err) {
       alert('Failed to update status');
@@ -40,9 +37,7 @@ export function AdminHeroSlidesPage() {
   const deleteSlide = async (id) => {
     if (!window.confirm('Are you sure you want to delete this slide?')) return;
     try {
-      await adminApi(`/api/admin/hero-slides/${id}`, {
-        method: 'DELETE',
-      });
+      await adminApi.deleteHeroSlide(id);
       fetchSlides();
     } catch (err) {
       alert('Failed to delete slide');
@@ -129,7 +124,7 @@ export function AdminHeroSlideForm() {
 
   useEffect(() => {
     if (isEditing) {
-      adminApi(`/api/admin/hero-slides/${id}`)
+      adminApi.heroSlide(id)
         .then((data) => {
           setSlide(data);
           setLoading(false);
@@ -165,15 +160,9 @@ export function AdminHeroSlideForm() {
     setSaving(true);
     try {
       if (isEditing) {
-        await adminApi(`/api/admin/hero-slides/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(slide),
-        });
+        await adminApi.updateHeroSlide(id, slide);
       } else {
-        await adminApi('/api/admin/hero-slides', {
-          method: 'POST',
-          body: JSON.stringify(slide),
-        });
+        await adminApi.createHeroSlide(slide);
       }
       navigate('/admin/hero');
     } catch (err) {
