@@ -828,6 +828,32 @@ export function AdminProductForm() {
             ))}
           </div>
 
+          <div className="admin-basic" style={{ marginTop: '20px' }}>
+            <div className="full-field">
+              <p className="eyebrow">SPECIFICATIONS</p>
+              <h2>Technical Details</h2>
+            </div>
+
+            {[
+              ['processor', 'Chip/Processor (e.g. A14 Bionic)'],
+              ['display', 'Display (e.g. 6.7-inch Super Retina)'],
+              ['camera', 'Camera (e.g. Triple 12MP)'],
+              ['battery', 'Battery (e.g. Up to 20 hours)'],
+              ['ram', 'RAM (e.g. 6GB)'],
+              ['screenSize', 'Screen Size (e.g. 6.7 inch)'],
+              ['os', 'Operating System (e.g. iOS 18)'],
+              ['weight', 'Weight (e.g. 238g)']
+            ].map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <input
+                  value={product[key] || ''}
+                  onChange={(event) => update(key, event.target.value)}
+                />
+              </label>
+            ))}
+          </div>
+
           <div className="variant-builder">
             <div>
               <p className="eyebrow">

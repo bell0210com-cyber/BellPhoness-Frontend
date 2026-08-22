@@ -317,6 +317,14 @@ export default function ProductPage() {
           </h2>
           <div className="spec-table">
             {Object.entries({
+              ...(product.processor ? { 'Chip/Processor': product.processor } : {}),
+              ...(product.display ? { Display: product.display } : {}),
+              ...(product.camera ? { Camera: product.camera } : {}),
+              ...(product.battery ? { Battery: product.battery } : {}),
+              ...(product.ram ? { 'Base RAM': product.ram } : {}),
+              ...(product.screenSize ? { 'Screen Size': product.screenSize } : {}),
+              ...(product.os ? { 'Operating System': product.os } : {}),
+              ...(product.weight ? { Weight: product.weight } : {}),
               ...(product.specs || {}),
               ...(currentVariant.color ? { Color: currentVariant.color } : {}),
               ...(currentVariant.ram ? { RAM: currentVariant.ram } : {}),
