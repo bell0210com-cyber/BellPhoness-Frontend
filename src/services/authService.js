@@ -10,6 +10,7 @@ import {
   updateProfile,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
 } from 'firebase/auth';
 
 import {
@@ -58,6 +59,13 @@ export async function signInWithEmail(
     password
   );
 
+  if (!result.user.emailVerified) {
+    await signOut(auth);
+    const error = new Error('Please verify your email address to log in.');
+    error.code = 'auth/email-unverified';
+    throw error;
+  }
+
   return result.user;
 }
 
@@ -97,6 +105,9 @@ export async function registerWithEmail({
       { merge: true }
     );
   }
+
+  await sendEmailVerification(user);
+  await signOut(auth);
 
   return user;
 }

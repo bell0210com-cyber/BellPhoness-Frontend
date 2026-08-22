@@ -141,12 +141,12 @@ export function AuthPage({ type }) {
 
         setState({
           kind: 'success',
-          message: 'Account created successfully. Redirecting...',
+          message: 'Account created! Please check your email to verify your account before logging in.',
         });
 
         setTimeout(() => {
-          navigate('/account');
-        }, 500);
+          navigate('/login');
+        }, 1500);
 
         return;
       }
@@ -164,6 +164,10 @@ export function AuthPage({ type }) {
       let message = 'Something went wrong. Please try again.';
 
       switch (error?.code) {
+        case 'auth/email-unverified':
+          message = 'Please verify your email address to log in. Check your inbox for the verification link.';
+          break;
+
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
         case 'auth/user-not-found':
