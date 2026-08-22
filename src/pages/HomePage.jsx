@@ -32,7 +32,10 @@ function ProductSection({ label, title, products }) {
 }
 export default function HomePage() {
   const { products } = useProducts();
-  const featured = products.filter((p) => p.featured).slice(0, 4);
+  let featured = products.filter((p) => p.featured).slice(0, 4);
+  if (featured.length === 0) {
+    featured = products.slice(0, 4);
+  }
   const bestsellers = products.filter((p) => p.bestseller).slice(0, 4);
 
   return (
