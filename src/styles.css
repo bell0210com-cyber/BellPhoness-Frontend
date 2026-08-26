@@ -1849,3 +1849,4 @@
 
 @media (max-width: 600px) { .modal-content { max-height: 80vh; overflow-y: auto; padding: 25px 20px; } .modal-content h2 { font-size: 1.5rem; } .modal-content p, .condition-guide-list li, .condition-guide-list strong { font-size: 13px; } .modal-close { z-index: 2; } }
 .modal-content { max-height: 90vh; overflow-y: auto; }
+/* Trigger deployment */
