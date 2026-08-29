@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL || 
   (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://api.bellphoness.com');
@@ -280,7 +281,7 @@ export default function HeroCarousel() {
                       <div className="hero-split-blend-overlay blend-bottom" />
 
                       <img
-                        src={slide.imageUrl}
+                        src={optimizeCloudinaryUrl(slide.imageUrl, { width: 900 })}
                         alt={mainHeading || 'Promotion Banner'}
                         className="hero-split-img"
                         loading={idx === 0 ? 'eager' : 'lazy'}

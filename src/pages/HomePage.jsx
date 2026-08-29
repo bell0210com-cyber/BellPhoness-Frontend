@@ -2,8 +2,8 @@ import { useProducts } from '../context/ProductsContext';
 import { Link } from 'react-router-dom';
 import Seo from '../components/Seo';
 import ProductCard from '../components/ProductCard';
+import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import HeroCarousel from '../components/HeroCarousel';
-
 
 const whyBell = [
   ['01', 'Curated technology', 'A focused selection for modern life.'],
@@ -11,7 +11,7 @@ const whyBell = [
   ['03', 'Support when needed', 'Helpful assistance throughout your order journey.'],
 ];
 
-function ProductSection({ label, title, products }) {
+function ProductSection({ label, title, products, loading }) {
   return (
     <section className="product-section shell">
       <div className="section-heading">
@@ -24,22 +24,29 @@ function ProductSection({ label, title, products }) {
         </Link>
       </div>
       <div className="product-grid">
-        {products.map((p) => (
-          <ProductCard product={p} key={p.id} />
-        ))}
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <ProductCardSkeleton key={`skeleton-${i}`} />
+          ))
+        ) : (
+          products.map((p) => (
+            <ProductCard product={p} key={p.id} />
+          ))
+        )}
       </div>
     </section>
   );
 }
+
 export default function HomePage() {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   let featured = products.filter((p) => p.featured).slice(0, 4);
-  if (featured.length === 0) {
+  if (featured.length === 0 && products.length > 0) {
     featured = products.slice(0, 4);
   }
 
   let bestsellersAndNew = products.filter((p) => p.bestseller || p.isNewArrival).slice(0, 4);
-  if (bestsellersAndNew.length === 0) {
+  if (bestsellersAndNew.length === 0 && products.length > 0) {
     // Fallback: show the next 4 products (or just most recent 4)
     bestsellersAndNew = products.length > 4 ? products.slice(4, 8) : products.slice(0, 4);
   }
@@ -57,6 +64,7 @@ export default function HomePage() {
         label="FEATURED"
         title={<>The BELL <em>selection.</em></>}
         products={featured}
+        loading={loading}
       />
 
       <section className="collection-banner">
@@ -89,6 +97,7 @@ export default function HomePage() {
         label="NEW & NOTED"
         title={<>New arrivals and <em>bestsellers.</em></>}
         products={bestsellersAndNew}
+        loading={loading}
       />
 
       <section className="why-home">

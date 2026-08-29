@@ -7,6 +7,7 @@ import VariantSelector from '../components/VariantSelector';
 import { productPrice, productVariants } from '../data/products';
 import { useProducts } from '../context/ProductsContext';
 import { useStore } from '../context/StoreContext';
+import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 import ProductReviews from '../components/ProductReviews';
 
 const formatPrice = (value) =>
@@ -51,7 +52,7 @@ const COLOR_MAP = {
 
 export default function ProductPage() {
   const { id } = useParams();
-  const { products, getProduct } = useProducts();
+  const { products, loading, getProduct } = useProducts();
   const navigate = useNavigate();
   const product = getProduct(id);
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
@@ -84,14 +85,33 @@ export default function ProductPage() {
       setActiveImage(0);
       setQuantity(1);
     }
-  }, [id]);
+  }, [id, firstVariant]);
 
   if (!product) {
+    if (loading) {
+      return (
+        <section className="shell product-detail" aria-busy="true">
+          <div className="gallery-main skeleton-box" style={{ height: 480, borderRadius: 8 }}>
+            <div className="skeleton-shimmer" />
+          </div>
+          <div className="product-info" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="skeleton-line" style={{ height: 20, width: '30%' }} />
+            <div className="skeleton-line" style={{ height: 36, width: '80%' }} />
+            <div className="skeleton-line" style={{ height: 28, width: '45%', margin: '10px 0' }} />
+            <div className="skeleton-line" style={{ height: 80, width: '100%' }} />
+          </div>
+        </section>
+      );
+    }
+
     return (
       <div className="empty-state">
         <span>✦</span>
         <h2>Product unavailable</h2>
         <p>This product is not available in the current collection.</p>
+        <Link className="button button-gold" to="/shop">
+          Back to shop <b>→</b>
+        </Link>
       </div>
     );
   }
@@ -101,7 +121,11 @@ export default function ProductPage() {
       Object.entries(selected).every(([key, value]) => !value || v[key] === value)
     ) || firstVariant;
 
-  const images = currentVariant.images?.length ? currentVariant.images : (product.variants?.[0]?.images || ['/placeholder.png']);
+  const rawImages = currentVariant.images?.length
+    ? currentVariant.images
+    : (product.variants?.[0]?.images?.length ? product.variants[0].images : ['/placeholder.svg']);
+
+  const images = rawImages.map((img) => optimizeCloudinaryUrl(img, { width: 800 }));
 
   const variantFields = [
     ['color', 'Color'],
@@ -193,12 +217,28 @@ export default function ProductPage() {
       <section className="shell product-detail">
         <div className="gallery">
           <div className="gallery-main">
-            <img src={images[activeImage] || images[0]} alt={`${product.name} in ${currentVariant.color || 'selected option'}`} />
+            <img
+              src={images[activeImage] || images[0] || '/placeholder.svg'}
+              alt={`${product.name} in ${currentVariant.color || 'selected option'}`}
+              onError={(e) => {
+                if (!e.currentTarget.src.includes('placeholder.svg')) {
+                  e.currentTarget.src = '/placeholder.svg';
+                }
+              }}
+            />
           </div>
           <div className="thumbs">
             {images.map((img, i) => (
               <button className={activeImage === i ? 'active' : ''} onClick={() => setActiveImage(i)} key={img}>
-                <img src={img} alt={`${product.name} view ${i + 1}`} />
+                <img
+                  src={img}
+                  alt={`${product.name} view ${i + 1}`}
+                  onError={(e) => {
+                    if (!e.currentTarget.src.includes('placeholder.svg')) {
+                      e.currentTarget.src = '/placeholder.svg';
+                    }
+                  }}
+                />
               </button>
             ))}
           </div>
@@ -265,7 +305,7 @@ export default function ProductPage() {
               className="button button-gold"
               disabled={!currentVariant.stock}
               onClick={(e) => {
-                import('../utils/animateToCart').then(m => m.animateToCart(e, (currentVariant.images?.[0] || product.variants?.[0]?.images?.[0] || '/placeholder.png')));
+                import('../utils/animateToCart').then(m => m.animateToCart(e, (currentVariant.images?.[0] || product.variants?.[0]?.images?.[0] || '/placeholder.svg')));
                 addToCart(product, currentVariant, quantity);
               }}
             >

@@ -3,11 +3,12 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import Seo from '../components/Seo';
 import PageHero from '../components/PageHero';
 import ProductCard from '../components/ProductCard';
+import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { categories, productPrice } from '../data/products';
 import { useProducts } from '../context/ProductsContext';
 
 export function ShopPage({ fixedCategory = '' }) {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const [params, setParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -204,10 +205,10 @@ export function ShopPage({ fixedCategory = '' }) {
 
         <div className="shop-results">
           <div className="shop-toolbar">
-            <p>{filtered.length} products</p>
+            <p>{loading ? 'Loading collection...' : `${filtered.length} products`}</p>
             <label>
               Sort
-              <select value={sort} onChange={(e) => updateParam('sort', e.target.value)}>
+              <select value={sort} onChange={(e) => updateParam('sort', e.target.value)} disabled={loading}>
                 <option value="featured">Featured</option>
                 <option value="newest">Newest</option>
                 <option value="price-low">Price low to high</option>
@@ -217,7 +218,13 @@ export function ShopPage({ fixedCategory = '' }) {
             </label>
           </div>
 
-          {filtered.length ? (
+          {loading ? (
+            <div className="product-grid">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <ProductCardSkeleton key={`shop-skeleton-${i}`} />
+              ))}
+            </div>
+          ) : filtered.length ? (
             <div className="product-grid">
               {filtered.map((p) => (
                 <ProductCard product={p} key={p.id} />

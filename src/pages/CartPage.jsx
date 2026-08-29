@@ -60,7 +60,15 @@ export default function CartPage({ wishlist = false }) {
             <div className="basket-items">
               {items.map((item) => (
                 <article className="basket-item" key={item.cartId || item.id}>
-                  <img src={item.selectedVariant?.images?.[0] || item.variants?.[0]?.images?.[0] || '/placeholder.png'} alt="" />
+                  <img
+                    src={item.selectedVariant?.images?.[0] || item.variants?.[0]?.images?.[0] || item.images?.[0] || '/placeholder.svg'}
+                    alt={item.name}
+                    onError={(e) => {
+                      if (!e.currentTarget.src.includes('placeholder.svg')) {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }
+                    }}
+                  />
                   <div>
                     <p>{item.brand}</p>
                     <h3>{item.name}</h3>
