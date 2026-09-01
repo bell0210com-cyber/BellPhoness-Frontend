@@ -78,84 +78,8 @@ export const AdminShell = ({ children }) => (
    ADMIN GUARD
 ========================================================= */
 
-export const AdminGuard = ({ children }) => {
-  const [status, setStatus] = useState('checking');
-
-  useEffect(() => {
-    let mounted = true;
-
-    if (!firebaseClientReady) {
-      setStatus('unauthorized');
-      return;
-    }
-
-    const auth = getAuth();
-
-    // IMPORTANT: Use onAuthStateChanged so we WAIT for Firebase to restore
-    // the session from localStorage before checking claims.
-    // Without this, auth.currentUser is null on page refresh.
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!mounted) return;
-
-      if (!user) {
-        setStatus('unauthorized');
-        return;
-      }
-
-      try {
-        // DO NOT pass `true` here. Forcing a token refresh on every page 
-        // load can cause network timeouts/errors which incorrectly log the user out.
-        // Firebase automatically refreshes tokens in the background when they expire.
-        const tokenResult = await getIdTokenResult(user);
-        const isAdmin = tokenResult.claims?.admin === true;
-
-        if (!isAdmin) {
-          await signOut(auth);
-          if (mounted) setStatus('unauthorized');
-          return;
-        }
-
-        if (mounted) setStatus('authorized');
-      } catch (error) {
-        console.error('Admin authentication check failed:', error);
-        // Don't sign out on network errors checking claims!
-        // Just set unauthorized for now.
-        if (mounted) setStatus('unauthorized');
-      }
-    });
-
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, []);
-
-  if (status === 'checking') {
-    return (
-      <section className="auth-page">
-        <div className="auth-card">
-          <div className="brand">
-            BELL<span className="brand-dot">.</span>
-          </div>
-
-          <p className="eyebrow">SECURE ADMIN</p>
-
-          <h1>Verifying access.</h1>
-
-          <p>
-            Please wait while BELL verifies your administrator credentials.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  if (status !== 'authorized') {
-    return <Navigate to="/admin/login" replace />;
-  }
-
-  return children;
-};
+import AdminGuard from '../components/AdminGuard';
+export { AdminGuard };
 
 /* =========================================================
    ERROR NOTICE
