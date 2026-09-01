@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Seo from '../components/Seo';
 import PageHero from '../components/PageHero';
@@ -9,6 +9,7 @@ import { useProducts } from '../context/ProductsContext';
 import { useStore } from '../context/StoreContext';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 import ProductReviews from '../components/ProductReviews';
+import BNPLBadges from '../components/BNPLBadges';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -18,37 +19,82 @@ const formatPrice = (value) =>
   }).format(value);
 
 const COLOR_MAP = {
+  // Apple Colors
+  'Pacific Blue': '#2d4b5a',
+  'Sierra Blue': '#9bb5ce',
   'Deep Purple': '#4c3959',
+  'Space Black': '#2e2c2f',
+  'Black Titanium': '#2d2c2a',
+  'White Titanium': '#f2f1ed',
+  'Blue Titanium': '#3b4454',
+  'Natural Titanium': '#9e968d',
+  'Desert Titanium': '#c4a68a',
+  'Alpine Green': '#505e55',
+  'Midnight Green': '#4e5851',
+  'Graphite': '#54524f',
+  'Space Gray': '#4e4f54',
+  'Space Grey': '#4e4f54',
   'Silver': '#e2e4e1',
   'Gold': '#fcebd5',
-  'Space Black': '#28272a',
-  'Natural Titanium': '#c1c1c1',
-  'Black Titanium': '#2e2e2e',
-  'White Titanium': '#f2f2f2',
-  'Blue Titanium': '#444a57',
-  'Desert Titanium': '#c1a690',
-  'Midnight Green': '#4e5851',
-  'Space Gray': '#4d4d4d',
-  'Graphite': '#5c5b57',
-  'Pacific Blue': '#2c4157',
-  'Sierra Blue': '#9bb5ce',
-  'Alpine Green': '#576856',
-  'Starlight': '#f9f6ef',
-  'Midnight': '#171e27',
-  'Blue': '#376288',
-  'Pink': '#fadee5',
-  'Red': '#c72333',
-  'Yellow': '#fae57c',
-  'Green': '#aee0cd',
-  'Purple': '#d2d3ec',
-  'White': '#fbf9f4',
-  'Black': '#1f2020',
-  'Coral': '#fc6554',
-  'Rose Gold': '#fad8d2',
+  'Rose Gold': '#e8c0b5',
   'Jet Black': '#0a0a0a',
+  'Midnight': '#191f28',
+  'Starlight': '#f0ece1',
+  'Product Red': '#e11c2a',
+  'Red': '#e11c2a',
+  'Blue': '#215e7d',
+  'Sky Blue': '#87ceeb',
+  'Purple': '#d1cdda',
+  'Yellow': '#f9e479',
+  'Pink': '#fae0d8',
+  'Black': '#1c1d1f',
+  'White': '#f5f5f7',
+  'Green': '#2d5a27',
   'Teal': '#7da0a2',
-  'Ultramarine': '#4d5b94'
+  'Ultramarine': '#4d5b94',
+  'Coral': '#ff6f61',
+  
+  // Samsung / Android Colors
+  'Phantom Black': '#1a1a1a',
+  'Titanium Black': '#1f1f1f',
+  'Titanium Gray': '#707070',
+  'Titanium Grey': '#707070',
+  'Titanium Violet': '#58427c',
+  'Titanium Yellow': '#f6d155',
+  'Cream': '#fffdd0',
+  'Lavender': '#e6e6fa',
+  'Onyx Black': '#1e1e1e',
+  'Marble Gray': '#d3d3d3',
+  'Cobalt Violet': '#6a5acd',
+  'Amber Yellow': '#ffbf00',
+  'Bora Purple': '#896f8e',
+  'Burgundy': '#582b35',
+  'Lime': '#d6e5a3',
+  'Mint': '#bce3cf'
 };
+
+function getColorHex(colorName, fallbackHex) {
+  if (fallbackHex && fallbackHex.startsWith('#') && fallbackHex !== '#ddd' && fallbackHex !== '#999') {
+    return fallbackHex;
+  }
+  if (!colorName) return '#888888';
+  if (COLOR_MAP[colorName]) return COLOR_MAP[colorName];
+  const normalized = colorName.trim().toLowerCase();
+  for (const [key, val] of Object.entries(COLOR_MAP)) {
+    if (key.toLowerCase() === normalized) return val;
+  }
+  if (normalized.includes('blue')) return '#2d4b5a';
+  if (normalized.includes('black') || normalized.includes('dark')) return '#1a1a1a';
+  if (normalized.includes('white') || normalized.includes('light')) return '#f5f5f7';
+  if (normalized.includes('silver') || normalized.includes('grey') || normalized.includes('gray')) return '#d0d0d0';
+  if (normalized.includes('gold')) return '#fcebd5';
+  if (normalized.includes('purple') || normalized.includes('violet')) return '#58427c';
+  if (normalized.includes('green')) return '#3d5a37';
+  if (normalized.includes('red')) return '#e11c2a';
+  if (normalized.includes('yellow')) return '#f6d155';
+  if (normalized.includes('pink')) return '#fae0d8';
+  return fallbackHex || '#888888';
+}
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -57,35 +103,222 @@ export default function ProductPage() {
   const product = getProduct(id);
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
 
-  const variants = product ? productVariants(product) : [];
+  const variants = useMemo(() => (product ? productVariants(product) : []), [product]);
   const firstVariant = variants[0];
 
-  const [selected, setSelected] = useState(() =>
-    firstVariant
-      ? {
-          color: firstVariant.color,
-          storage: firstVariant.storage,
-          ram: firstVariant.ram,
-          condition: firstVariant.condition,
-        }
-      : {}
-  );
+  // Dedicated States for Active Selection
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedStorage, setSelectedStorage] = useState('');
+  const [selectedCondition, setSelectedCondition] = useState('');
+  const [selectedRam, setSelectedRam] = useState('');
+
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showConditionGuide, setShowConditionGuide] = useState(false);
 
+  // Initialize selections when product or variant loads
   useEffect(() => {
     if (firstVariant) {
-      setSelected({
-        color: firstVariant.color,
-        storage: firstVariant.storage,
-        ram: firstVariant.ram,
-        condition: firstVariant.condition,
-      });
+      setSelectedColor(firstVariant.color || '');
+      setSelectedStorage(firstVariant.storage || '');
+      setSelectedCondition(firstVariant.condition || '');
+      setSelectedRam(firstVariant.ram || '');
       setActiveImage(0);
       setQuantity(1);
     }
-  }, [id, firstVariant]);
+  }, [id, firstVariant?.id, firstVariant?.sku, firstVariant?.color]);
+
+  // 1. Dynamic Variant Resolution (Matches current color, storage, condition, ram)
+  const currentVariant = useMemo(() => {
+    if (!variants.length) return {};
+
+    // 1. Exact match with all selected fields
+    const exact = variants.find(
+      (v) =>
+        (!selectedColor || (v.color && v.color.trim().toLowerCase() === selectedColor.trim().toLowerCase())) &&
+        (!selectedStorage || v.storage === selectedStorage) &&
+        (!selectedCondition || v.condition === selectedCondition) &&
+        (!selectedRam || v.ram === selectedRam)
+    );
+    if (exact) return exact;
+
+    // 2. Match with selected color and storage
+    if (selectedColor && selectedStorage) {
+      const match = variants.find(
+        (v) =>
+          v.color &&
+          v.color.trim().toLowerCase() === selectedColor.trim().toLowerCase() &&
+          v.storage === selectedStorage
+      );
+      if (match) return match;
+    }
+
+    // 3. Match with selected color
+    if (selectedColor) {
+      const match = variants.find(
+        (v) => v.color && v.color.trim().toLowerCase() === selectedColor.trim().toLowerCase()
+      );
+      if (match) return match;
+    }
+
+    return firstVariant || {};
+  }, [variants, selectedColor, selectedStorage, selectedCondition, selectedRam, firstVariant]);
+
+  // 2. Specific matching color variant for dynamic image resolution
+  const colorVariant = useMemo(() => {
+    if (!selectedColor || !variants.length) return firstVariant || null;
+    return (
+      variants.find(
+        (v) => v.color && v.color.trim().toLowerCase() === selectedColor.trim().toLowerCase()
+      ) || firstVariant
+    );
+  }, [variants, selectedColor, firstVariant]);
+
+  // 3. Dynamic lookup of the current product image corresponding to selectedColor
+  const currentImage = useMemo(() => {
+    // A. Check exact current variant images
+    if (Array.isArray(currentVariant?.images) && currentVariant.images.filter(Boolean).length > 0) {
+      const img = currentVariant.images.filter(Boolean)[activeImage] || currentVariant.images.filter(Boolean)[0];
+      if (img) return optimizeCloudinaryUrl(img, { width: 800 });
+    }
+    if (currentVariant?.image) {
+      return optimizeCloudinaryUrl(currentVariant.image, { width: 800 });
+    }
+
+    // B. Check matching color variant images
+    if (Array.isArray(colorVariant?.images) && colorVariant.images.filter(Boolean).length > 0) {
+      const img = colorVariant.images.filter(Boolean)[activeImage] || colorVariant.images.filter(Boolean)[0];
+      if (img) return optimizeCloudinaryUrl(img, { width: 800 });
+    }
+    if (colorVariant?.image) {
+      return optimizeCloudinaryUrl(colorVariant.image, { width: 800 });
+    }
+
+    // C. Fallback: product default images or placeholder
+    const fallback =
+      (Array.isArray(product?.images) && product.images[0]) ||
+      product?.defaultImage ||
+      (Array.isArray(firstVariant?.images) && firstVariant.images[0]) ||
+      firstVariant?.image ||
+      '/placeholder.svg';
+
+    return optimizeCloudinaryUrl(fallback, { width: 800 });
+  }, [currentVariant, colorVariant, product, firstVariant, activeImage]);
+
+  // 4. Dynamic Thumbnail List for current variant/color
+  const galleryImages = useMemo(() => {
+    let list = [];
+    if (Array.isArray(currentVariant?.images) && currentVariant.images.filter(Boolean).length > 0) {
+      list = currentVariant.images.filter(Boolean);
+    } else if (currentVariant?.image) {
+      list = [currentVariant.image];
+    } else if (Array.isArray(colorVariant?.images) && colorVariant.images.filter(Boolean).length > 0) {
+      list = colorVariant.images.filter(Boolean);
+    } else if (colorVariant?.image) {
+      list = [colorVariant.image];
+    } else if (Array.isArray(product?.images) && product.images.filter(Boolean).length > 0) {
+      list = product.images.filter(Boolean);
+    } else if (product?.defaultImage) {
+      list = [product.defaultImage];
+    } else {
+      list = ['/placeholder.svg'];
+    }
+    return list.map((img) => optimizeCloudinaryUrl(img, { width: 800 }));
+  }, [currentVariant, colorVariant, product]);
+
+  const variantFields = [
+    ['color', 'Color'],
+    ['storage', 'Storage'],
+    ['ram', 'RAM'],
+    ['condition', 'Condition'],
+  ].filter(([key]) => variants.some((v) => v[key]));
+
+  const optionsFor = (key) => {
+    const isColor = key === 'color';
+    const uniqueValues = [
+      ...new Map(variants.filter((v) => v[key]).map((v) => [v[key], v])).entries(),
+    ];
+
+    return uniqueValues.map(([value, v]) => {
+      let subLabel = undefined;
+      if (key === 'condition') {
+        const match = variants.find(
+          (v2) =>
+            v2.condition === value &&
+            (!selectedColor || v2.color === selectedColor) &&
+            (!selectedStorage || v2.storage === selectedStorage) &&
+            (!selectedRam || v2.ram === selectedRam)
+        );
+        if (match) subLabel = formatPrice(match.salePrice || match.price);
+      }
+
+      const hasVariants = variants.some((v2) => v2[key] === value);
+      const hasStock = variants.some((v2) => v2[key] === value && Number(v2.stock) > 0);
+      const available = isColor ? (hasStock || hasVariants) : hasVariants;
+
+      return {
+        value,
+        subLabel,
+        hex: isColor ? getColorHex(value, v.colorHex) : undefined,
+        available,
+      };
+    });
+  };
+
+  // State Update Handler for Color Swatches and Other Attributes
+  const selectOption = (key, value) => {
+    if (key === 'color') {
+      setSelectedColor(value);
+      // Synchronize storage / condition to available variant in this color if needed
+      const matchingVariant = variants.find(
+        (v) =>
+          v.color &&
+          v.color.trim().toLowerCase() === value.trim().toLowerCase() &&
+          (!selectedStorage || v.storage === selectedStorage)
+      ) || variants.find((v) => v.color && v.color.trim().toLowerCase() === value.trim().toLowerCase());
+
+      if (matchingVariant) {
+        if (matchingVariant.storage) setSelectedStorage(matchingVariant.storage);
+        if (matchingVariant.condition) setSelectedCondition(matchingVariant.condition);
+        if (matchingVariant.ram) setSelectedRam(matchingVariant.ram);
+      }
+    } else if (key === 'storage') {
+      setSelectedStorage(value);
+    } else if (key === 'condition') {
+      setSelectedCondition(value);
+    } else if (key === 'ram') {
+      setSelectedRam(value);
+    }
+
+    setActiveImage(0);
+    setQuantity(1);
+  };
+
+  const discountPercent = currentVariant.salePrice
+    ? Math.round((1 - currentVariant.salePrice / currentVariant.price) * 100)
+    : 0;
+
+  const stockLabel =
+    currentVariant.stock === 0
+      ? 'Out of stock'
+      : currentVariant.stock <= 3
+      ? `Low stock — ${currentVariant.stock} available`
+      : `${currentVariant.stock} available to order`;
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product?.name,
+    sku: currentVariant.sku,
+    brand: { '@type': 'Brand', name: product?.brand },
+    image: galleryImages,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'AED',
+      price: productPrice(currentVariant),
+      availability: currentVariant.stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+  };
 
   if (!product) {
     if (loading) {
@@ -116,94 +349,6 @@ export default function ProductPage() {
     );
   }
 
-  const currentVariant =
-    variants.find((v) =>
-      Object.entries(selected).every(([key, value]) => !value || v[key] === value)
-    ) || firstVariant;
-
-  const rawImages = currentVariant.images?.length
-    ? currentVariant.images
-    : (product.variants?.[0]?.images?.length ? product.variants[0].images : ['/placeholder.svg']);
-
-  const images = rawImages.map((img) => optimizeCloudinaryUrl(img, { width: 800 }));
-
-  const variantFields = [
-    ['color', 'Color'],
-    ['storage', 'Storage'],
-    ['ram', 'RAM'],
-    ['condition', 'Condition'],
-  ].filter(([key]) => variants.some((v) => v[key]));
-
-  const optionsFor = (key) => [
-    ...new Map(variants.filter((v) => v[key]).map((v) => [v[key], v])).entries(),
-  ].map(([value, v]) => {
-    let subLabel = undefined;
-    if (key === 'condition') {
-      const match = variants.find((v2) => 
-        v2.condition === value &&
-        (!selected.color || v2.color === selected.color) &&
-        (!selected.storage || v2.storage === selected.storage) &&
-        (!selected.ram || v2.ram === selected.ram)
-      );
-      if (match) subLabel = formatPrice(match.salePrice || match.price);
-    }
-    
-    return {
-      value,
-      subLabel,
-      hex: key === 'color' ? (COLOR_MAP[value] || v.colorHex || '#ddd') : undefined,
-      available: variants.some(
-        (v2) =>
-          v2[key] === value &&
-          Object.entries(selected).every(([k, val]) => k === key || !val || v2[k] === val)
-      ),
-    };
-  });
-
-  const selectOption = (key, value) => {
-    const match = variants.find(
-      (v) =>
-        v[key] === value &&
-        Object.entries(selected).every(([k, val]) => k === key || !val || v[k] === val)
-    );
-    if (match) {
-      setSelected({
-        color: match.color,
-        storage: match.storage,
-        ram: match.ram,
-        condition: match.condition,
-      });
-      setActiveImage(0);
-      setQuantity(1);
-    }
-  };
-
-  const discountPercent = currentVariant.salePrice
-    ? Math.round((1 - currentVariant.salePrice / currentVariant.price) * 100)
-    : 0;
-
-  const stockLabel =
-    currentVariant.stock === 0
-      ? 'Out of stock'
-      : currentVariant.stock <= 3
-      ? `Low stock — ${currentVariant.stock} available`
-      : `${currentVariant.stock} available to order`;
-
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    sku: currentVariant.sku,
-    brand: { '@type': 'Brand', name: product.brand },
-    image: images,
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'AED',
-      price: productPrice(currentVariant),
-      availability: currentVariant.stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-    },
-  };
-
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   return (
@@ -218,8 +363,10 @@ export default function ProductPage() {
         <div className="gallery">
           <div className="gallery-main">
             <img
-              src={images[activeImage] || images[0] || '/placeholder.svg'}
-              alt={`${product.name} in ${currentVariant.color || 'selected option'}`}
+              key={`${currentImage}-${selectedColor}`}
+              src={currentImage}
+              alt={`${product.name} in ${selectedColor || 'selected variant'}`}
+              className="gallery-main-img"
               onError={(e) => {
                 if (!e.currentTarget.src.includes('placeholder.svg')) {
                   e.currentTarget.src = '/placeholder.svg';
@@ -227,21 +374,29 @@ export default function ProductPage() {
               }}
             />
           </div>
-          <div className="thumbs">
-            {images.map((img, i) => (
-              <button className={activeImage === i ? 'active' : ''} onClick={() => setActiveImage(i)} key={img}>
-                <img
-                  src={img}
-                  alt={`${product.name} view ${i + 1}`}
-                  onError={(e) => {
-                    if (!e.currentTarget.src.includes('placeholder.svg')) {
-                      e.currentTarget.src = '/placeholder.svg';
-                    }
-                  }}
-                />
-              </button>
-            ))}
-          </div>
+          {galleryImages.length > 1 && (
+            <div className="thumbs">
+              {galleryImages.map((img, i) => (
+                <button
+                  type="button"
+                  className={activeImage === i ? 'active' : ''}
+                  onClick={() => setActiveImage(i)}
+                  key={`${img}-${i}`}
+                  aria-label={`View image ${i + 1}`}
+                >
+                  <img
+                    src={img}
+                    alt={`${product.name} view ${i + 1}`}
+                    onError={(e) => {
+                      if (!e.currentTarget.src.includes('placeholder.svg')) {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="product-info">
@@ -259,29 +414,91 @@ export default function ProductPage() {
             )}
           </div>
 
-          <p className="description">{product.description}</p>
+          <BNPLBadges price={productPrice(currentVariant)} />
+
+          {(() => {
+            const features = (product.description || '')
+              .split(/[,.\n•]+/)
+              .map((item) => item.trim())
+              .filter((item) => item.length > 0);
+
+            if (features.length === 0) return null;
+
+            return (
+              <div
+                className="product-feature-chips"
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  margin: '16px 0',
+                }}
+              >
+                {features.map((feature, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      backgroundColor: '#1a1a1a',
+                      border: '0.5px solid #2a2a2a',
+                      borderRadius: '20px',
+                      padding: '5px 10px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '5px',
+                        height: '5px',
+                        backgroundColor: '#FFD700',
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        display: 'inline-block',
+                      }}
+                    />
+                    <span style={{ fontSize: '12px', color: '#cccccc', lineHeight: 1.2 }}>
+                      {feature}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
 
               <div className="product-selectors">
-                {variantFields.map(([key, label]) => (
-                  <div key={key} style={{ position: 'relative' }}>
-                    <VariantSelector
-                      type={key}
-                      label={label}
-                      options={optionsFor(key)}
-                      selected={selected[key]}
-                      onSelect={(value) => selectOption(key, value)}
-                    />
-                    {key === 'condition' && (
-                      <button 
-                        type="button" 
-                        className="condition-guide-link"
-                        onClick={() => setShowConditionGuide(true)}
-                      >
-                        Condition Guide
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {variantFields.map(([key, label]) => {
+                  const selectedValue =
+                    key === 'color'
+                      ? selectedColor
+                      : key === 'storage'
+                      ? selectedStorage
+                      : key === 'condition'
+                      ? selectedCondition
+                      : selectedRam;
+
+                  return (
+                    <div key={key} style={{ position: 'relative' }}>
+                      <VariantSelector
+                        type={key}
+                        label={label}
+                        options={optionsFor(key)}
+                        selected={selectedValue}
+                        onSelect={(value) => selectOption(key, value)}
+                      />
+                      {key === 'condition' && (
+                        <button 
+                          type="button" 
+                          className="condition-guide-link"
+                          onClick={() => setShowConditionGuide(true)}
+                        >
+                          Condition Guide
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
           <p className={currentVariant.stock ? 'stock' : 'out-of-stock'}>{stockLabel}</p>
@@ -377,42 +594,56 @@ export default function ProductPage() {
         </section>
       )}
 
-      <section className="spec-section">
-        <div className="shell">
-          <p className="eyebrow">TECHNICAL DETAILS</p>
-          <h2>
-            Product <em>specifications.</em>
-          </h2>
-          
-          <div className="spec-descriptive">
-            {product.specsIntro && (
-              <p className="spec-intro">{product.specsIntro}</p>
-            )}
-            
-            <ul className="spec-bullets">
-              {Object.entries({
-                ...(product.processor ? { 'Chip/Processor': product.processor } : {}),
-                ...(product.display ? { Display: product.display } : {}),
-                ...(product.camera ? { Camera: product.camera } : {}),
-                ...(product.battery ? { Battery: product.battery } : {}),
-                ...(product.ram ? { 'Base RAM': product.ram } : {}),
-                ...(product.screenSize ? { 'Screen Size': product.screenSize } : {}),
-                ...(product.os ? { 'Operating System': product.os } : {}),
-                ...(product.weight ? { Weight: product.weight } : {}),
-                ...(product.specs || {}),
-                ...(currentVariant.color ? { Color: currentVariant.color } : {}),
-                ...(currentVariant.ram ? { RAM: currentVariant.ram } : {}),
-                ...(currentVariant.storage ? { Storage: currentVariant.storage } : {}),
-                ...(currentVariant.condition ? { Condition: currentVariant.condition } : {}),
-              }).map(([key, value]) => (
-                <li key={key}>
-                  <strong>{key}:</strong> {value}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
+      {(() => {
+        const specsEntries = Object.entries({
+          ...(product.processor ? { 'Chip / Processor': product.processor } : {}),
+          ...(product.display ? { 'Display': product.display } : {}),
+          ...(product.screenSize ? { 'Screen Size': product.screenSize } : {}),
+          ...(product.camera ? { 'Camera System': product.camera } : {}),
+          ...(product.battery ? { 'Battery': product.battery } : {}),
+          ...(product.os ? { 'Operating System': product.os } : {}),
+          ...(product.network ? { 'Network / Connectivity': product.network } : {}),
+          ...(product.weight ? { 'Weight': product.weight } : {}),
+          ...(product.ram ? { 'RAM': product.ram } : {}),
+          ...(currentVariant?.color ? { 'Color': currentVariant.color } : {}),
+          ...(currentVariant?.storage ? { 'Storage': currentVariant.storage } : {}),
+          ...(currentVariant?.condition ? { 'Condition': currentVariant.condition } : {}),
+          ...(product.specs || {}),
+        }).filter(([_, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+
+        if (!specsEntries.length && !product.specsIntro) return null;
+
+        return (
+          <section className="spec-section">
+            <div className="shell">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">TECHNICAL DETAILS</p>
+                  <h2>
+                    Product <em>specifications.</em>
+                  </h2>
+                </div>
+              </div>
+
+              {product.specsIntro && (
+                <p className="spec-intro">{product.specsIntro}</p>
+              )}
+
+              <div className="spec-specs-grid">
+                {specsEntries.map(([key, value]) => (
+                  <div key={key} className="spec-item-card">
+                    <div className="spec-item-label-group">
+                      <span className="spec-item-bullet" />
+                      <span className="spec-item-key">{key}</span>
+                    </div>
+                    <span className="spec-item-val">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       <ProductReviews productId={product.id} />
 
