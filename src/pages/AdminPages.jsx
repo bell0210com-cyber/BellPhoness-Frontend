@@ -5,7 +5,7 @@ import {
   signOut,
   getIdTokenResult
 } from 'firebase/auth';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getCountFromServer } from 'firebase/firestore';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import Seo from '../components/Seo';
@@ -14,6 +14,7 @@ import { adminApi } from '../services/adminApi';
 import { createEmptyVariant } from '../data/productSchema';
 import { uploadImageToCloudinary } from '../services/cloudinary';
 import { getAllReviews, deleteReview } from '../services/reviewService';
+import { fetchDashboardSummaryAggregations } from '../services/dashboardAggregation';
 
 const categories = [
   'iPhone',
@@ -77,7 +78,7 @@ export const AdminShell = ({ children }) => (
    ADMIN GUARD
 ========================================================= */
 
-const AdminGuard = ({ children }) => {
+export const AdminGuard = ({ children }) => {
   const [status, setStatus] = useState('checking');
 
   useEffect(() => {
@@ -340,79 +341,123 @@ export function AdminLoginPage() {
 ========================================================= */
 
 export function AdminDashboard() {
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [error, setError] = useState('');
+  // Dedicated Independent Summary Metrics State (Zero dummy values, Zero paginated array dependencies)
+  const [totalProductsCount, setTotalProductsCount] = useState(0);
+  const [activeProductsCount, setActiveProductsCount] = useState(0);
+  const [inactiveProductsCount, setInactiveProductsCount] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
+  const [outOfStockCount, setOutOfStockCount] = useState(0);
+  const [totalOrdersCount, setTotalOrdersCount] = useState(0);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Firestore Real-time & Aggregated Counts
   useEffect(() => {
-    Promise.all([
-      adminApi.products(),
-      adminApi.orders()
-    ])
-      .then(([productData, orderData]) => {
-        setProducts(productData);
-        setOrders(orderData);
-      })
-      .catch((requestError) => {
-        setError(requestError.message);
-      });
+    let isMounted = true;
+
+    async function fetchAggregateCounts() {
+      // 1. Fetch full unpaginated aggregates from backend
+      try {
+        const statsData = await adminApi.stats();
+        if (statsData && isMounted) {
+          if (statsData.totalProducts != null) setTotalProductsCount(statsData.totalProducts);
+          if (statsData.activeProducts != null) setActiveProductsCount(statsData.activeProducts);
+          if (statsData.inactiveProducts != null) setInactiveProductsCount(statsData.inactiveProducts);
+          if (statsData.totalOrders != null) setTotalOrdersCount(statsData.totalOrders);
+          if (statsData.pendingOrders != null) setPendingOrdersCount(statsData.pendingOrders);
+          if (statsData.lowStock != null) setLowStockCount(statsData.lowStock);
+          if (statsData.outOfStock != null) setOutOfStockCount(statsData.outOfStock);
+          if (statsData.revenue != null) setTotalRevenue(statsData.revenue);
+          setLoading(false);
+          return;
+        }
+      } catch (apiErr) {
+        console.warn('Backend stats API note:', apiErr);
+      }
+
+      // 2. Direct Firestore fallback (Sums all catalog products & valid revenue)
+      try {
+        if (db) {
+          const [prodsSnap, ordersSnap] = await Promise.all([
+            getDocs(collection(db, 'products')),
+            getDocs(collection(db, 'orders'))
+          ]);
+
+          let totalP = 0;
+          let activeP = 0;
+          let lowS = 0;
+          let outS = 0;
+
+          prodsSnap.docs.forEach((doc) => {
+            const data = doc.data();
+            const isActive = data.is_active === true;
+            const variants = Array.isArray(data.variants) && data.variants.length > 0 ? data.variants : [{}];
+            totalP += variants.length;
+            if (isActive) activeP += variants.length;
+
+            if (Array.isArray(data.variants) && data.variants.length > 0) {
+              const totalStock = data.variants.reduce((s, v) => s + (Number(v.stock) || 0), 0);
+              if (totalStock === 0) outS++;
+              else if (totalStock <= 5) lowS++;
+            }
+          });
+
+          let totalO = ordersSnap.size;
+          let pendingO = 0;
+          let rev = 0;
+
+          ordersSnap.docs.forEach((doc) => {
+            const data = doc.data();
+            const status = (data.status || '').toLowerCase();
+            const payStatus = (data.paymentStatus || '').toLowerCase();
+            if (data.status === 'Pending') pendingO++;
+            if (status !== 'cancelled' && payStatus !== 'failed') {
+              rev += Number(data.total) || 0;
+            }
+          });
+
+          if (isMounted) {
+            setTotalProductsCount(totalP);
+            setActiveProductsCount(activeP);
+            setInactiveProductsCount(Math.max(0, totalP - activeP));
+            setTotalOrdersCount(totalO);
+            setPendingOrdersCount(pendingO);
+            setLowStockCount(lowS);
+            setOutOfStockCount(outS);
+            setTotalRevenue(rev);
+          }
+        }
+      } catch (err) {
+        console.error('Direct Firestore aggregation error:', err);
+        if (isMounted) setError(err.message);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchAggregateCounts();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const lowStock = products.filter((product) =>
-    product.variants?.some(
-      (variant) =>
-        variant.stock > 0 &&
-        variant.stock <= 5
-    )
-  ).length;
+  const formatAED = (amount) =>
+    `AED ${Number(amount || 0).toLocaleString()}`;
 
+  // Summary Metrics — strictly bound to true counts (NO array.length or string formatting)
   const stats = [
-    ['Total products', products.length],
-
-    [
-      'Active products',
-      products.filter(
-        (product) => product.is_active
-      ).length
-    ],
-
-    [
-      'Inactive products',
-      products.filter(
-        (product) => !product.is_active
-      ).length
-    ],
-
-    ['Low stock', lowStock],
-
-    [
-      'Out of stock',
-      products.filter(
-        (product) =>
-          product.variants?.length > 0 &&
-          product.variants.every(
-            (variant) => Number(variant.stock) === 0
-          )
-      ).length
-    ],
-
-    ['Total orders', orders.length],
-
-    [
-      'Pending orders',
-      orders.filter(
-        (order) => order.status === 'Pending'
-      ).length
-    ],
-
-    [
-      'Revenue',
-      `AED ${orders.reduce(
-        (total, order) =>
-          total + Number(order.total || 0),
-        0
-      )}`
-    ]
+    { label: 'Total products', value: totalProductsCount },
+    { label: 'Active products', value: activeProductsCount },
+    { label: 'Inactive products', value: inactiveProductsCount },
+    { label: 'Low stock', value: lowStockCount },
+    { label: 'Out of stock', value: outOfStockCount },
+    { label: 'Total orders', value: totalOrdersCount },
+    { label: 'Pending orders', value: pendingOrdersCount },
+    { label: 'Revenue', value: formatAED(totalRevenue) }
   ];
 
   return (
@@ -420,7 +465,7 @@ export function AdminDashboard() {
       <AdminShell>
         <Seo
           title="Admin Dashboard | BELL"
-          description="BELL admin dashboard."
+          description="BELL admin dashboard overview."
         />
 
         <header className="admin-header">
@@ -428,20 +473,18 @@ export function AdminDashboard() {
             <p className="eyebrow">OVERVIEW</p>
             <h1>Dashboard</h1>
           </div>
-
-          <Link
-            className="button button-gold"
-            to="/admin/products/add"
-          >
-            Add product
+          <Link className="button button-gold" to="/admin/products/add">
+            ADD PRODUCT
           </Link>
         </header>
 
         <ErrorNotice message={error} />
 
-        {!error && (
+        {loading ? (
+          <div className="dash-empty-state">Loading dashboard analytics and data…</div>
+        ) : (
           <div className="admin-stats">
-            {stats.map(([label, value]) => (
+            {stats.map(({ label, value }) => (
               <div key={label}>
                 <span>{label}</span>
                 <strong>{value}</strong>

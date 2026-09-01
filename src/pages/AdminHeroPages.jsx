@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Seo from '../components/Seo';
 import { adminApi } from '../services/adminApi';
 import { uploadImageToCloudinary } from '../services/cloudinary';
-import { AdminShell } from './AdminPages';
+import { AdminShell, AdminGuard } from './AdminPages';
+
 
 export function AdminHeroSlidesPage() {
   const [slides, setSlides] = useState([]);
@@ -47,8 +48,9 @@ export function AdminHeroSlidesPage() {
   const isMaxReached = slides.length >= 5;
 
   return (
-    <AdminShell>
-      <Seo title="Admin | Hero Carousel Slides" />
+    <AdminGuard>
+      <AdminShell>
+        <Seo title="Admin | Hero Carousel Slides" />
       <div className="admin-header">
         <div>
           <h1>Hero Carousel Slides</h1>
@@ -248,6 +250,7 @@ export function AdminHeroSlidesPage() {
         </div>
       )}
     </AdminShell>
+  </AdminGuard>
   );
 }
 
@@ -371,15 +374,18 @@ export function AdminHeroSlideForm() {
 
   if (loading) {
     return (
-      <AdminShell>
-        <p>Loading slide details...</p>
-      </AdminShell>
+      <AdminGuard>
+        <AdminShell>
+          <p>Loading slide details...</p>
+        </AdminShell>
+      </AdminGuard>
     );
   }
 
   return (
-    <AdminShell>
-      <Seo title={`Admin | ${isEditing ? 'Edit' : 'Add'} Hero Slide`} />
+    <AdminGuard>
+      <AdminShell>
+        <Seo title={`Admin | ${isEditing ? 'Edit' : 'Add'} Hero Slide`} />
       <div className="admin-header">
         <div>
           <h1>{isEditing ? 'Edit' : 'Add'} Hero Slide</h1>
@@ -628,5 +634,6 @@ export function AdminHeroSlideForm() {
         </div>
       </div>
     </AdminShell>
+  </AdminGuard>
   );
 }

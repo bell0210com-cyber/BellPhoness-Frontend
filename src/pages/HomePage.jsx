@@ -4,6 +4,7 @@ import Seo from '../components/Seo';
 import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import HeroCarousel from '../components/HeroCarousel';
+import Interactive3DCollections from '../components/Interactive3DCollections';
 
 const whyBell = [
   ['01', 'Curated technology', 'A focused selection for modern life.'],
@@ -67,31 +68,7 @@ export default function HomePage() {
         loading={loading}
       />
 
-      <section className="collection-banner">
-        <div className="shell">
-          <p className="eyebrow">SMARTPHONE COLLECTIONS</p>
-          <div className="collection-grid">
-            <Link to="/category/iphone">
-              <span>APPLE</span>
-              <h2>
-                iPhone
-                <br />
-                <em>collection.</em>
-              </h2>
-              <b>Explore →</b>
-            </Link>
-            <Link to="/category/samsung">
-              <span>SAMSUNG</span>
-              <h2>
-                Galaxy
-                <br />
-                <em>collection.</em>
-              </h2>
-              <b>Explore →</b>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <Interactive3DCollections />
 
       <ProductSection
         label="NEW & NOTED"

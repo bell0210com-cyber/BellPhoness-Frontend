@@ -24,7 +24,11 @@ async function request(path, options = {}) {
 }
 
 export const adminApi = {
-  products: () => request('/api/admin/products'),
+  stats: () => request('/api/admin/stats'),
+  products: (params) => {
+    const qs = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return request(`/api/admin/products${qs}`);
+  },
   product: (id) => request(`/api/admin/products/${id}`),
   createProduct: (product) =>
     request('/api/admin/products', {
@@ -43,7 +47,10 @@ export const adminApi = {
     }),
   deleteProduct: (id) => request(`/api/admin/products/${id}`, { method: 'DELETE' }),
 
-  orders: () => request('/api/admin/orders'),
+  orders: (params) => {
+    const qs = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return request(`/api/admin/orders${qs}`);
+  },
   order: (id) => request(`/api/admin/orders/${id}`),
   updateOrderStatus: (id, status) =>
     request(`/api/admin/orders/${id}`, {

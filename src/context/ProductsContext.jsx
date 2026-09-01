@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchLiveProducts } from '../services/liveProducts';
 
 const ProductsContext = createContext();
@@ -44,13 +44,16 @@ export function ProductsProvider({ children }) {
     };
   }, [loadProducts]);
 
-  const value = {
-    products: liveProducts,
-    loading: loading && liveProducts.length === 0,
-    isRefreshing: loading && liveProducts.length > 0,
-    getProduct: (id) => liveProducts.find((p) => p.id === id),
-    refreshProducts: () => loadProducts(true),
-  };
+  const value = useMemo(
+    () => ({
+      products: liveProducts,
+      loading: loading && liveProducts.length === 0,
+      isRefreshing: loading && liveProducts.length > 0,
+      getProduct: (id) => liveProducts.find((p) => p.id === id),
+      refreshProducts: () => loadProducts(true),
+    }),
+    [liveProducts, loading, loadProducts]
+  );
 
   return (
     <ProductsContext.Provider value={value}>
