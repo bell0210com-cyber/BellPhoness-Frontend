@@ -56,18 +56,28 @@ export default function BNPLBadges({ price = 0 }) {
 
   return (
     <div className="bnpl-badges-container" style={containerStyle} aria-label="BNPL installment options">
-      {/* Tamara Card */}
+      {/* Tamara Card (Active & Fully Functional) */}
       <div className="bnpl-badge-card" style={cardStyle}>
         <span style={tamaraLogoStyle}>TAMARA</span>
         <span style={subtitleStyle}>4 payments, 0% interest</span>
         <span style={amountStyle}>AED {installment} / mo</span>
       </div>
 
-      {/* Tabby Card */}
-      <div className="bnpl-badge-card" style={cardStyle}>
-        <span style={tabbyLogoStyle}>tabby</span>
-        <span style={subtitleStyle}>4 payments, 0% interest</span>
-        <span style={amountStyle}>AED {installment} / mo</span>
+      {/* Tabby Card (Disabled - Coming Soon) */}
+      <div
+        className="bnpl-badge-card disabled"
+        style={{
+          ...cardStyle,
+          opacity: 0.55,
+          cursor: 'not-allowed',
+          border: '0.5px dashed #3a3a3a',
+          userSelect: 'none',
+        }}
+      >
+        <span style={{ ...tabbyLogoStyle, opacity: 0.8 }}>tabby</span>
+        <span style={{ color: '#888888', fontSize: '13px', fontWeight: 600, margin: '6px 0 2px' }}>
+          Coming Soon
+        </span>
       </div>
     </div>
   );
