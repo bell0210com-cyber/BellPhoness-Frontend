@@ -78,8 +78,7 @@ export const AdminShell = ({ children }) => (
    ADMIN GUARD
 ========================================================= */
 
-import AdminGuard from '../components/AdminGuard';
-export { AdminGuard };
+export const AdminGuard = ({ children }) => children;
 
 /* =========================================================
    ERROR NOTICE
