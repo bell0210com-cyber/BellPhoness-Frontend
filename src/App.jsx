@@ -20,6 +20,8 @@ import PrivacyCenterPage from './pages/PrivacyCenterPage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import CheckoutPage from './pages/CheckoutPage';
+import TamaraCallbackPage from './pages/TamaraCallbackPage';
+import TabbyCallbackPage from './pages/TabbyCallbackPage';
 
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -89,6 +91,9 @@ export default function App() {
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/tamara/callback" element={<TamaraCallbackPage />} />
+            <Route path="/checkout/tabby/callback" element={<TabbyCallbackPage />} />
+
 
             <Route path="/search" element={<SearchPage />} />
             <Route path="/account/edit" element={<EditProfilePage />} />

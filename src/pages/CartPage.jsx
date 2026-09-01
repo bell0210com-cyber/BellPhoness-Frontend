@@ -3,6 +3,8 @@ import PageHero from '../components/PageHero';
 import Seo from '../components/Seo';
 import { useStore } from '../context/StoreContext';
 import { productPrice } from '../data/products';
+import TamaraWidget from '../components/TamaraWidget';
+import TabbyWidget from '../components/TabbyWidget';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -29,6 +31,12 @@ function OrderSummary({ items, onCheckout, onClear }) {
         <span>Total</span>
         <b>{formatPrice(subtotal)}</b>
       </p>
+
+      <div style={{ margin: '14px 0 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <TamaraWidget amount={subtotal} inline={false} />
+        <TabbyWidget amount={subtotal} inline={false} />
+      </div>
+
       <button className="button button-gold full" onClick={onCheckout}>
         Secure checkout →
       </button>
