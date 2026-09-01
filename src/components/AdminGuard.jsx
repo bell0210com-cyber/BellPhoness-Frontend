@@ -81,9 +81,21 @@ export default function AdminGuard({ children }) {
     setSendingOtp(true);
 
     try {
-      const data = await adminAuthApi.sendOtp();
+      const auth = getAuth();
+      const currentEmail = auth.currentUser?.email || '';
+      const data = await adminAuthApi.sendOtp(currentEmail);
+      
       setSuccessMsg(data.message || 'Verification code sent to your admin email.');
       if (data.emailMasked) setMaskedEmail(data.emailMasked);
+
+      // Temporary Console Bypass for Developer Tools inspection
+      if (data.devOtp) {
+        console.log(
+          '%c🔑 [BELL ADMIN OTP]: ' + data.devOtp,
+          'background: #111; color: #be9a5d; font-size: 18px; font-weight: bold; padding: 6px 14px; border-radius: 4px;'
+        );
+      }
+
       setCooldown(60); // 60s cooldown
     } catch (err) {
       console.error('Send OTP error:', err);
@@ -110,7 +122,7 @@ export default function AdminGuard({ children }) {
     try {
       const res = await adminAuthApi.verifyOtp(cleanOtp);
       if (res.verified) {
-        // Save session in sessionStorage (expires automatically when tab is closed)
+        // Save session in sessionStorage (clears automatically when tab is closed)
         const sessionPayload = {
           verified: true,
           token: res.token,
@@ -172,9 +184,15 @@ export default function AdminGuard({ children }) {
             Admin Verification
           </h1>
 
-          <p style={{ fontSize: 14, color: '#666', lineHeight: 1.5, margin: '0 0 20px' }}>
+          <p style={{ fontSize: 14, color: '#666', lineHeight: 1.5, margin: '0 0 14px' }}>
             Every new browser session requires an OTP verification code sent to your registered Gmail address.
           </p>
+
+          {maskedEmail && (
+            <p style={{ fontSize: 13, color: '#be9a5d', fontWeight: 600, background: '#fdfaf5', padding: '6px 12px', borderRadius: 6, margin: '0 0 16px', border: '1px solid #f0ede6' }}>
+              Destination: {maskedEmail}
+            </p>
+          )}
 
           {/* Feedback Alerts */}
           {errorMsg && (

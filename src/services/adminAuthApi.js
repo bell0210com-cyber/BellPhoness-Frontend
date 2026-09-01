@@ -1,10 +1,11 @@
 const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://api.bellphoness.com/api');
 
 export const adminAuthApi = {
-  sendOtp: async () => {
+  sendOtp: async (email) => {
     const res = await fetch(`${API_URL}/admin/auth/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: (email || '').trim() }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
