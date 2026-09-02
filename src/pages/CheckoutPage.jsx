@@ -10,6 +10,7 @@ import { tamaraApi } from '../services/tamaraApi';
 import { tabbyApi } from '../services/tabbyApi';
 import TamaraWidget from '../components/TamaraWidget';
 import TabbyPromoWidget from '../components/TabbyPromoWidget';
+import TabbyCard from '../components/TabbyCard';
 import TabbyLogo from '../components/TabbyLogo';
 
 const formatPrice = (value) =>
@@ -117,7 +118,7 @@ function AddressStep({ address, onChange, next }) {
   );
 }
 
-function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
+function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next }) {
   return (
     <div className="checkout-panel">
       <h2>Select payment method</h2>
@@ -193,10 +194,10 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
               <TabbyLogo width={76} height={26} />
             </div>
           </label>
+
+          {/* Official TabbyCard Checkout Snippet */}
           {paymentMethod === 'tabby' && (
-            <p style={{ fontSize: '11px', color: '#888888', margin: '8px 4px 0', lineHeight: 1.4 }}>
-              Pay Later (Short Term Credit) is provided by Tabby LLC. Terms and conditions apply. For more information or to contact us, visit tabby.ai
-            </p>
+            <TabbyCard price={price} currency="AED" />
           )}
         </div>
 
@@ -432,6 +433,7 @@ export default function CheckoutPage() {
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
               dubaiOrder={dubaiOrder}
+              price={total}
               next={() => setStep(4)}
             />
           )}
