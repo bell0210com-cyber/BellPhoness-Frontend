@@ -9,6 +9,7 @@ import { useProducts } from '../context/ProductsContext';
 import { useStore } from '../context/StoreContext';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 import ProductReviews from '../components/ProductReviews';
+import TamaraPromoCard from '../components/TamaraPromoCard';
 import TabbyPromoWidget from '../components/TabbyPromoWidget';
 
 const formatPrice = (value) =>
@@ -414,8 +415,19 @@ export default function ProductPage() {
             )}
           </div>
 
-          {/* Official Tabby Pay-in-4 On-Site Messaging Snippet */}
-          <TabbyPromoWidget price={productPrice(currentVariant)} />
+          {/* BNPL Options: Restored Tamara Card & Official Tabby Promo Widget */}
+          <div
+            className="product-bnpl-stack"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              margin: '14px 0 16px',
+            }}
+          >
+            <TamaraPromoCard price={productPrice(currentVariant)} />
+            <TabbyPromoWidget price={productPrice(currentVariant)} />
+          </div>
 
           {(() => {
             const features = (product.description || '')

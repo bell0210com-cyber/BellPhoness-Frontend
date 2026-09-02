@@ -41,7 +41,7 @@ export default function TabbyPromoWidget({ price, currency = 'AED' }) {
   if (!price) return null;
 
   return (
-    <div className="tabby-promo-container" style={{ margin: '14px 0 16px' }}>
+    <div className="tabby-promo-container" style={{ margin: 0 }}>
       {/* Official Tabby on-site messaging container */}
       <div id="TabbyPromo"></div>
     </div>
