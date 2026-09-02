@@ -10,7 +10,7 @@ export default function TabbyCallbackPage() {
   const { clearCart } = useStore();
 
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState(null); // 'approved' | 'declined' | 'canceled' | 'error'
+  const [status, setStatus] = useState(null); // 'approved' | 'rejected' | 'canceled' | 'error'
   const [error, setError] = useState('');
 
   const orderId = params.get('orderId') || params.get('order_id') || params.get('order_reference_id') || '';
@@ -21,6 +21,38 @@ export default function TabbyCallbackPage() {
     let mounted = true;
 
     async function processCallback() {
+      // 1. Immediate handling for explicit rejected / failed status
+      if (paymentStatus === 'rejected' || paymentStatus === 'failed' || paymentStatus === 'declined') {
+        if (orderId) {
+          try {
+            await tabbyApi.verifyReturn(orderId, paymentStatus, paymentId);
+          } catch (e) {
+            console.debug('Tabby verifyReturn notice:', e);
+          }
+        }
+        if (mounted) {
+          setStatus('rejected');
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 2. Immediate handling for explicit canceled status
+      if (paymentStatus === 'canceled' || paymentStatus === 'cancelled') {
+        if (orderId) {
+          try {
+            await tabbyApi.verifyReturn(orderId, paymentStatus, paymentId);
+          } catch (e) {
+            console.debug('Tabby verifyReturn notice:', e);
+          }
+        }
+        if (mounted) {
+          setStatus('canceled');
+          setLoading(false);
+        }
+        return;
+      }
+
       if (!orderId) {
         setStatus('error');
         setError('Missing order reference.');
@@ -34,8 +66,12 @@ export default function TabbyCallbackPage() {
           if (paymentStatus === 'approved' || paymentStatus === 'authorized' || res.success) {
             clearCart();
             setStatus('approved');
+          } else if (paymentStatus === 'rejected' || paymentStatus === 'failed' || paymentStatus === 'declined') {
+            setStatus('rejected');
+          } else if (paymentStatus === 'canceled' || paymentStatus === 'cancelled') {
+            setStatus('canceled');
           } else {
-            setStatus(paymentStatus === 'canceled' ? 'canceled' : 'declined');
+            setStatus('rejected');
           }
         }
       } catch (err) {
@@ -44,6 +80,10 @@ export default function TabbyCallbackPage() {
           if (paymentStatus === 'approved' || paymentStatus === 'authorized') {
             clearCart();
             setStatus('approved');
+          } else if (paymentStatus === 'rejected' || paymentStatus === 'failed' || paymentStatus === 'declined') {
+            setStatus('rejected');
+          } else if (paymentStatus === 'canceled' || paymentStatus === 'cancelled') {
+            setStatus('canceled');
           } else {
             setStatus('error');
             setError(err.message || 'Unable to verify payment status with Tabby.');
@@ -77,6 +117,7 @@ export default function TabbyCallbackPage() {
     );
   }
 
+  // Approved Status
   if (status === 'approved') {
     return (
       <>
@@ -102,21 +143,22 @@ export default function TabbyCallbackPage() {
     );
   }
 
+  // Cancelled Status
   if (status === 'canceled') {
     return (
       <>
         <Seo title="Payment Cancelled | BELL" description="Tabby payment was cancelled." />
         <PageHero eyebrow="BELL / CHECKOUT" title={<>Payment <em>cancelled.</em></>} />
         <div className="shell empty-state">
-          <span>✕</span>
+          <span style={{ color: 'var(--gold, #be9a5d)', fontSize: 32 }}>✕</span>
           <h2>Payment was not completed</h2>
           <p>You cancelled the Tabby checkout. Your cart items are still saved.</p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
             <Link className="button button-gold" to="/checkout">
-              Return to Checkout →
+              RETURN TO CHECKOUT →
             </Link>
             <Link className="button button-dark" to="/cart">
-              View Cart
+              VIEW CART
             </Link>
           </div>
         </div>
@@ -124,20 +166,44 @@ export default function TabbyCallbackPage() {
     );
   }
 
+  // Rejected Status (paymentStatus=rejected or failed)
+  if (status === 'rejected' || status === 'declined') {
+    return (
+      <>
+        <Seo title="Payment Rejected | BELL" description="Your Tabby payment application was not approved." />
+        <PageHero eyebrow="BELL / CHECKOUT" title={<>Payment <em>rejected.</em></>} />
+        <div className="shell empty-state">
+          <span style={{ color: 'var(--gold, #be9a5d)', fontSize: 32 }}>✕</span>
+          <h2>Your Tabby application was not approved.</h2>
+          <p>Don&apos;t worry — you can try Tamara or Cash on Delivery instead.</p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+            <Link className="button button-gold" to="/checkout">
+              RETURN TO CHECKOUT →
+            </Link>
+            <Link className="button button-dark" to="/cart">
+              VIEW CART
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Generic Error / Fallback Status
   return (
     <>
       <Seo title="Payment Status | BELL" description="Tabby payment status." />
       <PageHero eyebrow="BELL / CHECKOUT" title={<>Payment <em>unsuccessful.</em></>} />
       <div className="shell empty-state">
-        <span>!</span>
+        <span style={{ color: 'var(--gold, #be9a5d)', fontSize: 32 }}>✕</span>
         <h2>Unable to complete Tabby payment</h2>
         <p>{error || 'The payment could not be processed by Tabby. Please try another payment method or contact support.'}</p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
           <Link className="button button-gold" to="/checkout">
-            Try Again →
+            RETURN TO CHECKOUT →
           </Link>
-          <Link className="button button-dark" to="/contact">
-            Contact Support
+          <Link className="button button-dark" to="/cart">
+            VIEW CART
           </Link>
         </div>
       </div>
