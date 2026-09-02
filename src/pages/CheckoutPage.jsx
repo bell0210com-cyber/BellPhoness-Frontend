@@ -166,7 +166,7 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
           className={`payment-option-card ${paymentMethod === 'tabby' ? 'selected' : ''}`}
           style={{
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             gap: 14,
             padding: '16px 18px',
             border: paymentMethod === 'tabby' ? '2px solid var(--gold, #be9a5d)' : '1px solid #d8d1c8',
@@ -182,20 +182,15 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
             value="tabby"
             checked={paymentMethod === 'tabby'}
             onChange={() => setPaymentMethod('tabby')}
-            style={{ marginTop: 4 }}
+            style={{ cursor: 'pointer' }}
           />
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <strong style={{ fontSize: 14, color: '#111' }}>
-                Pay via Tabby (Split in 4)
-              </strong>
-              <span className="tabby-logo-text" style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
-                tabby
-              </span>
-            </div>
-            <p style={{ fontSize: 12, color: '#555', margin: '6px 0 0', lineHeight: 1.4 }}>
-              Pay 25% today and the rest in <strong>3 interest-free monthly installments</strong>. Zero interest, no hidden charges.
-            </p>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <strong style={{ fontSize: 14, color: '#111' }}>
+              Pay via Tabby
+            </strong>
+            <span className="tabby-logo-text" style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
+              tabby
+            </span>
           </div>
         </label>
 
