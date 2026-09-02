@@ -276,6 +276,11 @@ export default function CheckoutPage() {
 
   const dubaiOrder = isDubai(address.emirate);
 
+  const subtotal = cart.reduce((sum, item) => sum + productPrice(item) * item.quantity, 0);
+  const hasEmirate = !!address.emirate;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
+  const total = subtotal + (hasEmirate ? shipping : 0);
+
   const placeOrder = async () => {
     const auth = getAuth();
     if (!auth.currentUser) {
