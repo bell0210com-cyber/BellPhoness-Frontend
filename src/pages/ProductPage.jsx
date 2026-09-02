@@ -414,6 +414,9 @@ export default function ProductPage() {
             )}
           </div>
 
+          {/* Official Tabby Pay-in-4 On-Site Messaging Snippet */}
+          <TabbyPromoWidget price={productPrice(currentVariant)} />
+
           {(() => {
             const features = (product.description || '')
               .split(/[,.\n•]+/)
@@ -500,9 +503,6 @@ export default function ProductPage() {
               </div>
 
           <p className={currentVariant.stock ? 'stock' : 'out-of-stock'}>{stockLabel}</p>
-
-          {/* Official Tabby Pay-in-4 On-Site Messaging Snippet */}
-          <TabbyPromoWidget price={productPrice(currentVariant)} />
 
           <div className="purchase-actions">
             <div className="quantity">
