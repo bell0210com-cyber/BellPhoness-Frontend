@@ -9,7 +9,7 @@ import { useProducts } from '../context/ProductsContext';
 import { useStore } from '../context/StoreContext';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 import ProductReviews from '../components/ProductReviews';
-import BNPLBadges from '../components/BNPLBadges';
+import TabbyPromoWidget from '../components/TabbyPromoWidget';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -414,8 +414,6 @@ export default function ProductPage() {
             )}
           </div>
 
-          <BNPLBadges price={productPrice(currentVariant)} />
-
           {(() => {
             const features = (product.description || '')
               .split(/[,.\n•]+/)
@@ -502,6 +500,9 @@ export default function ProductPage() {
               </div>
 
           <p className={currentVariant.stock ? 'stock' : 'out-of-stock'}>{stockLabel}</p>
+
+          {/* Official Tabby Pay-in-4 On-Site Messaging Snippet */}
+          <TabbyPromoWidget price={productPrice(currentVariant)} />
 
           <div className="purchase-actions">
             <div className="quantity">
