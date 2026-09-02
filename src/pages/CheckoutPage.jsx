@@ -9,7 +9,7 @@ import { orderApi } from '../services/orderApi';
 import { tamaraApi } from '../services/tamaraApi';
 import { tabbyApi } from '../services/tabbyApi';
 import TamaraWidget from '../components/TamaraWidget';
-import TabbyWidget from '../components/TabbyWidget';
+import TabbyPromoWidget from '../components/TabbyPromoWidget';
 import TabbyLogo from '../components/TabbyLogo';
 
 const formatPrice = (value) =>
@@ -52,9 +52,9 @@ function OrderSummary({ items, emirate }) {
         <b>{formatPrice(total)}</b>
       </p>
       
-      <div style={{ margin: '14px 0 6px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ margin: '14px 0 6px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <TamaraWidget amount={total} inline={false} />
-        <TabbyWidget amount={total} inline={false} />
+        <TabbyPromoWidget price={total} source="checkout" containerId="TabbyPromoCheckout" />
       </div>
 
       <small>
