@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TabbyLogo from './TabbyLogo';
 
 const formatMoney = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -18,9 +19,7 @@ export default function TabbyWidget({ amount = 0, inline = true }) {
     <>
       <div className={`tabby-promo-badge ${inline ? 'tabby-inline' : ''}`} role="region" aria-label="Tabby Installment Options">
         <div className="tabby-badge-content">
-          <span className="tabby-icon-logo">
-            <span className="tabby-logo-text">tabby</span>
-          </span>
+          <TabbyLogo width={68} height={20} />
           <span className="tabby-text">
             or 4 interest-free payments of <strong>{formatMoney(instalmentAmount)}</strong>
           </span>
@@ -50,7 +49,9 @@ export default function TabbyWidget({ amount = 0, inline = true }) {
             </button>
 
             <div className="tabby-modal-header">
-              <div className="tabby-modal-logo">tabby</div>
+              <div className="tabby-modal-logo" style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                <TabbyLogo width={96} height={28} />
+              </div>
               <h3>Split your payment into 4 with Tabby</h3>
               <p>Shop now and pay over 4 months with zero interest and no hidden fees.</p>
             </div>

@@ -1,3 +1,5 @@
+import TabbyLogo from './TabbyLogo';
+
 export default function BNPLBadges({ price = 0 }) {
   const numericPrice = Number(price) || 0;
   if (numericPrice <= 0) return null;
@@ -31,14 +33,6 @@ export default function BNPLBadges({ price = 0 }) {
     textTransform: 'uppercase',
   };
 
-  const tabbyLogoStyle = {
-    color: '#3df0b0',
-    fontWeight: 700,
-    fontSize: '11px',
-    letterSpacing: '0.5px',
-    textTransform: 'lowercase',
-  };
-
   const subtitleStyle = {
     color: '#888888',
     fontSize: '12px',
@@ -63,9 +57,11 @@ export default function BNPLBadges({ price = 0 }) {
         <span style={amountStyle}>AED {installment} / mo</span>
       </div>
 
-      {/* Tabby Card */}
+      {/* Tabby Card with Official SVG Logo */}
       <div className="bnpl-badge-card" style={cardStyle}>
-        <span style={tabbyLogoStyle}>tabby</span>
+        <div style={{ marginBottom: 1 }}>
+          <TabbyLogo width={70} height={21} />
+        </div>
         <span style={subtitleStyle}>4 payments, 0% interest</span>
         <span style={amountStyle}>AED {installment} / mo</span>
       </div>

@@ -10,6 +10,7 @@ import { tamaraApi } from '../services/tamaraApi';
 import { tabbyApi } from '../services/tabbyApi';
 import TamaraWidget from '../components/TamaraWidget';
 import TabbyWidget from '../components/TabbyWidget';
+import TabbyLogo from '../components/TabbyLogo';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -188,9 +189,7 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
             <strong style={{ fontSize: 14, color: '#111' }}>
               Pay via Tabby
             </strong>
-            <span className="tabby-logo-text" style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
-              tabby
-            </span>
+            <TabbyLogo width={76} height={23} />
           </div>
         </label>
 
