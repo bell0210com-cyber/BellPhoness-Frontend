@@ -8,7 +8,7 @@ const formatMoney = (value) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-export default function TabbyWidget({ amount = 0, inline = true }) {
+export default function TabbyWidget({ amount = 0, inline = true, showDisclaimer = true }) {
   const [showModal, setShowModal] = useState(false);
   const numericAmount = Number(amount) || 0;
   const instalmentAmount = numericAmount / 4;
@@ -16,24 +16,30 @@ export default function TabbyWidget({ amount = 0, inline = true }) {
   if (numericAmount <= 0) return null;
 
   return (
-    <>
-      <div className={`tabby-promo-badge ${inline ? 'tabby-inline' : ''}`} role="region" aria-label="Tabby Installment Options">
-        <div className="tabby-badge-content">
-          <TabbyLogo width={68} height={20} />
-          <span className="tabby-text">
-            or 4 interest-free payments of <strong>{formatMoney(instalmentAmount)}</strong>
+    <div className="tabby-widget-container">
+      <div className={`tabby-promo-badge ${inline ? 'tabby-inline' : ''}`} role="region" aria-label="Tabby Payment Options">
+        <div className="tabby-badge-content" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span className="tabby-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            or 4 interest-free payments of <strong>{formatMoney(instalmentAmount)}</strong> with
           </span>
+          <TabbyLogo width={68} height={24} />
           <button
             type="button"
             className="tabby-info-btn"
             onClick={() => setShowModal(true)}
-            title="Learn more about Tabby split payments"
+            title="Learn more about Tabby Pay in 4"
             aria-label="Tabby payment information"
           >
             ⓘ
           </button>
         </div>
       </div>
+
+      {showDisclaimer && (
+        <p style={{ fontSize: '11px', color: '#888888', margin: '6px 0 0', lineHeight: 1.35 }}>
+          Pay Later (Short Term Credit) is provided by Tabby LLC. Terms and conditions apply. For more information or to contact us, visit tabby.ai
+        </p>
+      )}
 
       {/* Tabby Information Modal */}
       {showModal && (
@@ -50,10 +56,10 @@ export default function TabbyWidget({ amount = 0, inline = true }) {
 
             <div className="tabby-modal-header">
               <div className="tabby-modal-logo" style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-                <TabbyLogo width={96} height={28} />
+                <TabbyLogo width={96} height={34} />
               </div>
-              <h3>Split your payment into 4 with Tabby</h3>
-              <p>Shop now and pay over 4 months with zero interest and no hidden fees.</p>
+              <h3>Pay in 4 with Tabby</h3>
+              <p>Shop now and pay over 4 months with 4 interest-free payments and no hidden fees.</p>
             </div>
 
             <div className="tabby-timeline">
@@ -114,6 +120,10 @@ export default function TabbyWidget({ amount = 0, inline = true }) {
               </div>
             </div>
 
+            <p style={{ fontSize: '11px', color: '#888888', margin: '16px 0', lineHeight: 1.4, textAlign: 'center' }}>
+              Pay Later (Short Term Credit) is provided by Tabby LLC. Terms and conditions apply. For more information or to contact us, visit tabby.ai
+            </p>
+
             <button
               type="button"
               className="button button-gold tabby-modal-btn"
@@ -124,6 +134,6 @@ export default function TabbyWidget({ amount = 0, inline = true }) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

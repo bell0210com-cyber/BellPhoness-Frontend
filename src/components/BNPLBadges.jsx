@@ -21,7 +21,7 @@ export default function BNPLBadges({ price = 0 }) {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: '3px',
+    gap: '4px',
     boxSizing: 'border-box',
   };
 
@@ -49,22 +49,29 @@ export default function BNPLBadges({ price = 0 }) {
   };
 
   return (
-    <div className="bnpl-badges-container" style={containerStyle} aria-label="BNPL installment options">
-      {/* Tamara Card */}
-      <div className="bnpl-badge-card" style={cardStyle}>
-        <span style={tamaraLogoStyle}>TAMARA</span>
-        <span style={subtitleStyle}>4 payments, 0% interest</span>
-        <span style={amountStyle}>AED {installment} / mo</span>
+    <div className="bnpl-badges-wrapper" style={{ marginTop: '12px' }}>
+      <div className="bnpl-badges-container" style={containerStyle} aria-label="BNPL installment options">
+        {/* Tamara Card */}
+        <div className="bnpl-badge-card" style={cardStyle}>
+          <span style={tamaraLogoStyle}>TAMARA</span>
+          <span style={subtitleStyle}>4 interest-free payments</span>
+          <span style={amountStyle}>AED {installment} / mo</span>
+        </div>
+
+        {/* Tabby Card with Official SVG Logo */}
+        <div className="bnpl-badge-card" style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+            <TabbyLogo width={68} height={24} />
+          </div>
+          <span style={subtitleStyle}>4 interest-free payments</span>
+          <span style={amountStyle}>AED {installment} / mo</span>
+        </div>
       </div>
 
-      {/* Tabby Card with Official SVG Logo */}
-      <div className="bnpl-badge-card" style={cardStyle}>
-        <div style={{ marginBottom: 1 }}>
-          <TabbyLogo width={70} height={21} />
-        </div>
-        <span style={subtitleStyle}>4 payments, 0% interest</span>
-        <span style={amountStyle}>AED {installment} / mo</span>
-      </div>
+      {/* UAE Tabby Regulatory Disclaimer */}
+      <p style={{ fontSize: '11px', color: '#888888', margin: '8px 0 0', lineHeight: 1.4 }}>
+        Pay Later (Short Term Credit) is provided by Tabby LLC. Terms and conditions apply. For more information or to contact us, visit tabby.ai
+      </p>
     </div>
   );
 }

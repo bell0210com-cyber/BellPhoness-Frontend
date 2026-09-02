@@ -1,8 +1,8 @@
-export default function TabbyLogo({ width = 80, height = 24, className = '', style = {} }) {
+export default function TabbyLogo({ width = 80, height = 28, className = '', style = {} }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 80 24"
+      viewBox="0 0 80 28"
       width={width}
       height={height}
       className={className}
@@ -10,14 +10,14 @@ export default function TabbyLogo({ width = 80, height = 24, className = '', sty
       role="img"
       aria-label="Tabby"
     >
-      <rect width="80" height="24" rx="4" fill="#3DF0B0" />
+      <rect width="80" height="28" rx="8" fill="#6CFF93" />
       <text
         x="40"
-        y="17"
-        fontFamily="Arial, sans-serif"
-        fontWeight="700"
-        fontSize="14"
-        fill="#000000"
+        y="20"
+        fontFamily="Arial Black, sans-serif"
+        fontWeight="900"
+        fontSize="15"
+        fill="#1A1919"
         textAnchor="middle"
       >
         tabby

@@ -163,35 +163,42 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
         </label>
 
         {/* Tabby BNPL Option */}
-        <label
-          className={`payment-option-card ${paymentMethod === 'tabby' ? 'selected' : ''}`}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            padding: '16px 18px',
-            border: paymentMethod === 'tabby' ? '2px solid var(--gold, #be9a5d)' : '1px solid #d8d1c8',
-            background: paymentMethod === 'tabby' ? '#fdfaf5' : '#fff',
-            borderRadius: 10,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <input
-            type="radio"
-            name="paymentMethod"
-            value="tabby"
-            checked={paymentMethod === 'tabby'}
-            onChange={() => setPaymentMethod('tabby')}
-            style={{ cursor: 'pointer' }}
-          />
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <strong style={{ fontSize: 14, color: '#111' }}>
-              Pay via Tabby
-            </strong>
-            <TabbyLogo width={76} height={23} />
-          </div>
-        </label>
+        <div>
+          <label
+            className={`payment-option-card ${paymentMethod === 'tabby' ? 'selected' : ''}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              padding: '16px 18px',
+              border: paymentMethod === 'tabby' ? '2px solid var(--gold, #be9a5d)' : '1px solid #d8d1c8',
+              background: paymentMethod === 'tabby' ? '#fdfaf5' : '#fff',
+              borderRadius: 10,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="tabby"
+              checked={paymentMethod === 'tabby'}
+              onChange={() => setPaymentMethod('tabby')}
+              style={{ cursor: 'pointer' }}
+            />
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <strong style={{ fontSize: 14, color: '#111' }}>
+                Pay later with Tabby
+              </strong>
+              <TabbyLogo width={76} height={26} />
+            </div>
+          </label>
+          {paymentMethod === 'tabby' && (
+            <p style={{ fontSize: '11px', color: '#888888', margin: '8px 4px 0', lineHeight: 1.4 }}>
+              Pay Later (Short Term Credit) is provided by Tabby LLC. Terms and conditions apply. For more information or to contact us, visit tabby.ai
+            </p>
+          )}
+        </div>
 
         {/* Cash on Delivery Option */}
         <label
@@ -436,7 +443,7 @@ export default function CheckoutPage() {
                 paymentMethod === 'tamara'
                   ? 'You will be securely redirected to Tamara to complete your 4 interest-free installments.'
                   : paymentMethod === 'tabby'
-                  ? 'You will be securely redirected to Tabby to complete your 4 interest-free split payments.'
+                  ? 'You will be securely redirected to Tabby to complete your 4 interest-free payments.'
                   : dubaiOrder
                   ? 'Confirm your order below. Payment will be collected on delivery.'
                   : 'Confirm your order below. Our team will contact you to arrange prepayment before shipping.'
@@ -446,7 +453,7 @@ export default function CheckoutPage() {
                 paymentMethod === 'tamara'
                   ? 'Pay with Tamara (Pay in 4)'
                   : paymentMethod === 'tabby'
-                  ? 'Pay with Tabby (Split in 4)'
+                  ? 'Pay later with Tabby'
                   : 'Place order'
               }
               disabled={placing}
