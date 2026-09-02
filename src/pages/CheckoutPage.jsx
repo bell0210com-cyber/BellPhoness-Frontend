@@ -53,6 +53,7 @@ function OrderSummary({ items, emirate }) {
       
       <div style={{ margin: '14px 0 6px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <TamaraWidget amount={total} inline={false} />
+        <TabbyWidget amount={total} inline={false} />
       </div>
 
       <small>
@@ -160,19 +161,18 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
           </div>
         </label>
 
-        {/* Tabby BNPL Option (Temporarily Disabled - Coming Soon) */}
+        {/* Tabby BNPL Option */}
         <label
-          className="payment-option-card disabled"
+          className={`payment-option-card ${paymentMethod === 'tabby' ? 'selected' : ''}`}
           style={{
             display: 'flex',
             alignItems: 'flex-start',
             gap: 14,
             padding: '16px 18px',
-            border: '1px dashed #d8d1c8',
-            background: '#faf8f5',
+            border: paymentMethod === 'tabby' ? '2px solid var(--gold, #be9a5d)' : '1px solid #d8d1c8',
+            background: paymentMethod === 'tabby' ? '#fdfaf5' : '#fff',
             borderRadius: 10,
-            cursor: 'not-allowed',
-            opacity: 0.65,
+            cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
         >
@@ -180,21 +180,21 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, next }) {
             type="radio"
             name="paymentMethod"
             value="tabby"
-            disabled
-            checked={false}
-            style={{ marginTop: 4, cursor: 'not-allowed' }}
+            checked={paymentMethod === 'tabby'}
+            onChange={() => setPaymentMethod('tabby')}
+            style={{ marginTop: 4 }}
           />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <strong style={{ fontSize: 14, color: '#666' }}>
+              <strong style={{ fontSize: 14, color: '#111' }}>
                 Pay via Tabby (Split in 4)
               </strong>
-              <span className="tabby-logo-text" style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, opacity: 0.8 }}>
+              <span className="tabby-logo-text" style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
                 tabby
               </span>
             </div>
-            <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0', fontWeight: 600 }}>
-              Coming Soon
+            <p style={{ fontSize: 12, color: '#555', margin: '6px 0 0', lineHeight: 1.4 }}>
+              Pay 25% today and the rest in <strong>3 interest-free monthly installments</strong>. Zero interest, no hidden charges.
             </p>
           </div>
         </label>
@@ -310,6 +310,20 @@ export default function CheckoutPage() {
           return;
         } else {
           throw new Error('Tamara did not return a valid checkout URL.');
+        }
+      } else if (paymentMethod === 'tabby') {
+        // Tabby Checkout flow
+        const session = await tabbyApi.createCheckoutSession({
+          items,
+          shippingAddress: address,
+        });
+
+        const redirectUrl = session.checkout_url || session.checkoutUrl;
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+          return;
+        } else {
+          throw new Error('Tabby did not return a valid checkout URL.');
         }
       } else {
         // Standard Cash on Delivery / Direct Order
