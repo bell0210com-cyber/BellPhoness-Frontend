@@ -5,7 +5,8 @@ import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 let memoryCache = null;
 let lastFetchTime = 0;
 let inFlightPromise = null;
-const CACHE_TTL = 3 * 60 * 1000; // 3 minutes cache
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes memory cache
+const STORAGE_KEY = 'bell_cached_products_v2';
 
 const formatRawProduct = (data, id) => {
   if (!data) return null;
@@ -71,20 +72,58 @@ const formatRawProduct = (data, id) => {
 const mapFirestoreProduct = (docSnap) => formatRawProduct(docSnap.data(), docSnap.id);
 
 /**
- * Fallback: Fetch products from Backend REST API (/api/products)
+ * Fetch products from Backend REST API (/api/products) with fast timeout
  */
-async function fetchProductsFromRestApi() {
-  const apiBase = import.meta.env.VITE_API_BASE_URL || '';
-  const url = `${apiBase}/api/products`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`REST API returned ${response.status}`);
+async function fetchProductsFromRestApi(timeoutMs = 4000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+    const url = `${apiBase}/api/products`;
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`REST API returned ${response.status}`);
+    }
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid products array from REST API');
+    }
+    return data.map((item) => formatRawProduct(item, item.id)).filter(Boolean);
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
   }
-  const data = await response.json();
-  if (!Array.isArray(data)) {
-    throw new Error('Invalid products array from REST API');
+}
+
+/**
+ * Fetch from Cloud Firestore with strict timeout to prevent 15-second hangs
+ */
+async function fetchProductsFromFirestore(timeoutMs = 1500) {
+  if (!firebaseClientReady || !db) {
+    throw new Error('Firebase client not ready');
   }
-  return data.map((item) => formatRawProduct(item, item.id)).filter(Boolean);
+
+  return new Promise(async (resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Firestore fetch timeout')), timeoutMs);
+
+    try {
+      const q = query(collection(db, 'products'), where('is_active', '==', true));
+      const snapshot = await getDocs(q);
+      clearTimeout(timeout);
+
+      if (snapshot.empty) {
+        return resolve([]);
+      }
+      const items = snapshot.docs.map(mapFirestoreProduct);
+      resolve(items);
+    } catch (err) {
+      clearTimeout(timeout);
+      reject(err);
+    }
+  });
 }
 
 export async function fetchLiveProducts(forceRefresh = false) {
@@ -103,44 +142,53 @@ export async function fetchLiveProducts(forceRefresh = false) {
   inFlightPromise = (async () => {
     let items = [];
 
-    // 1. Try fetching from Cloud Firestore Web SDK first
-    if (firebaseClientReady && db) {
+    // Attempt fast Firestore fetch and REST API concurrently for lowest possible latency
+    try {
+      items = await Promise.any([
+        fetchProductsFromFirestore(1500),
+        fetchProductsFromRestApi(3500),
+      ]);
+    } catch {
+      // If Promise.any rejected (both failed), try a final direct REST attempt
       try {
-        const q = query(collection(db, 'products'), where('is_active', '==', true));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          items = snapshot.docs.map(mapFirestoreProduct);
-        }
-      } catch (firestoreError) {
-        console.warn('Direct Firestore SDK fetch failed, falling back to REST API:', firestoreError?.message || firestoreError);
+        items = await fetchProductsFromRestApi(5000);
+      } catch (fallbackErr) {
+        console.warn('All live product fetch strategies failed:', fallbackErr);
       }
     }
 
-    // 2. If Firestore direct fetch returned empty or failed, fetch via backend REST API
-    if (!items || items.length === 0) {
-      try {
-        items = await fetchProductsFromRestApi();
-      } catch (restError) {
-        console.error('REST API products fetch failed:', restError?.message || restError);
-      }
-    }
-
-    if (items && items.length > 0) {
+    if (Array.isArray(items) && items.length > 0) {
       memoryCache = items;
       lastFetchTime = Date.now();
 
-      // Persist to sessionStorage for instant cross-page navigation
+      // Persist to localStorage and sessionStorage
       try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
         sessionStorage.setItem('bell_cached_products', JSON.stringify(items));
         sessionStorage.setItem('bell_cached_time', String(lastFetchTime));
       } catch {
-        // sessionStorage quota or disabled
+        // quota exceeded
       }
 
       return items;
     }
 
-    // If both failed, return memoryCache or empty array
+    // Fallback: Check localStorage if network failed
+    if (!memoryCache) {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            memoryCache = parsed;
+            return parsed;
+          }
+        }
+      } catch {
+        // storage disabled
+      }
+    }
+
     return memoryCache || [];
   })().finally(() => {
     inFlightPromise = null;

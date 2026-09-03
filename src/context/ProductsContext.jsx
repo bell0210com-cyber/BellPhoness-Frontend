@@ -3,17 +3,28 @@ import { fetchLiveProducts } from '../services/liveProducts';
 
 const ProductsContext = createContext();
 
+const LOCAL_STORAGE_KEY = 'bell_cached_products_v2';
+
 const getInitialProducts = () => {
   try {
-    const raw = sessionStorage.getItem('bell_cached_products');
-    if (raw) {
-      const parsed = JSON.parse(raw);
+    // 1. Check localStorage for persistent instant boot
+    const local = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+    // 2. Check sessionStorage
+    const session = sessionStorage.getItem('bell_cached_products');
+    if (session) {
+      const parsed = JSON.parse(session);
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed;
       }
     }
   } catch {
-    // sessionStorage unavailable
+    // Storage quota or private browsing mode
   }
   return [];
 };
@@ -28,6 +39,11 @@ export function ProductsProvider({ children }) {
       const items = await fetchLiveProducts(forceRefresh);
       if (Array.isArray(items) && items.length > 0) {
         setLiveProducts(items);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+        } catch {
+          // ignore storage error
+        }
       }
     } catch (err) {
       console.error('Failed to load products in ProductsContext:', err);
@@ -62,4 +78,4 @@ export function ProductsProvider({ children }) {
   );
 }
 
-export const useProducts = () => useContext(ProductsContext);
+export const useProducts = () => useContext(ProductsContext);
