@@ -22,6 +22,8 @@ export function ShopPage({ fixedCategory = '' }) {
   const maxPrice = Number(params.get('maxPrice') || 0);
   const sort = params.get('sort') || 'featured';
 
+  const categoryTitle = category ? category.charAt(0).toUpperCase() + category.slice(1) : '';
+
   const filtered = [...products]
     .filter((p) => {
       const matchesSearch =
@@ -93,13 +95,13 @@ export function ShopPage({ fixedCategory = '' }) {
   return (
     <>
       <Seo
-        title="Shop Premium Technology | BELL"
-        description="Shop BELL's selection of smartphones, electronics, and accessories in AED."
+        title={`${categoryTitle ? `${categoryTitle} | ` : ''}Shop Premium Technology | BELL`}
+        description={`Explore BELL's selection of ${categoryTitle || 'smartphones, electronics, and accessories'} in AED.`}
       />
 
       <PageHero
-        title={<>Shop <em>technology.</em></>}
-        text="Explore a considered selection of smartphones, accessories, and everyday electronics."
+        title={categoryTitle ? <>{categoryTitle} <em>collection.</em></> : <>Shop <em>technology.</em></>}
+        text={categoryTitle ? `Explore our premium selection of ${categoryTitle}.` : "Explore a considered selection of smartphones, accessories, and everyday electronics."}
       />
 
       <section className="shell shop-layout">
@@ -229,6 +231,32 @@ export function ShopPage({ fixedCategory = '' }) {
               {filtered.map((p) => (
                 <ProductCard product={p} key={p.id} />
               ))}
+            </div>
+          ) : category || brand ? (
+            <div className="empty-state coming-soon-state" style={{ padding: '60px 24px', textAlign: 'center' }}>
+              <span style={{ fontSize: '32px', color: '#be9a5d', display: 'inline-block', marginBottom: '14px' }}>✦</span>
+              <h2 style={{ fontSize: '26px', fontWeight: 600, color: '#111', marginBottom: '10px' }}>
+                {category
+                  ? `${category.charAt(0).toUpperCase() + category.slice(1)} Coming Soon`
+                  : `${brand} Coming Soon`}
+              </h2>
+              <p style={{ color: '#666', maxWidth: '460px', margin: '0 auto 28px', fontSize: '15px', lineHeight: 1.6 }}>
+                We are currently curating new products for this section. The upcoming collection will be available shortly.
+              </p>
+              <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Link className="button button-gold" to="/shop">
+                  Browse All Smartphones <b>→</b>
+                </Link>
+                {category && (
+                  <button
+                    type="button"
+                    className="button button-dark"
+                    onClick={() => setParams({})}
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="empty-state">
