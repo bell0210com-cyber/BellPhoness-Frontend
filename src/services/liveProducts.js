@@ -7,8 +7,9 @@ let lastFetchTime = 0;
 let inFlightPromise = null;
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes cache
 
-const mapFirestoreProduct = (docSnap) => {
-  const data = docSnap.data();
+const formatRawProduct = (data, id) => {
+  if (!data) return null;
+  const productId = id || data.id;
   const rawVariants = Array.isArray(data.variants) ? data.variants : [];
   
   // Extract and optimize all images (w_600 for high DPI / mobile & desktop crispness)
@@ -41,8 +42,15 @@ const mapFirestoreProduct = (docSnap) => {
   if (firstVariant.ram) specs.RAM = firstVariant.ram;
   if (firstVariant.color) specs.Color = firstVariant.color;
 
+  let createdAt = new Date().toISOString();
+  if (data.createdAt?.toDate) {
+    createdAt = data.createdAt.toDate().toISOString();
+  } else if (data.createdAt) {
+    createdAt = new Date(data.createdAt).toISOString();
+  }
+
   return {
-    id: docSnap.id,
+    id: productId,
     name: data.name,
     brand: data.brand,
     category: data.category,
@@ -56,15 +64,30 @@ const mapFirestoreProduct = (docSnap) => {
     variants,
     featured: Boolean(data.featured),
     bestseller: Boolean(data.bestseller),
-    createdAt: data.createdAt?.toDate
-      ? data.createdAt.toDate().toISOString()
-      : new Date().toISOString(),
+    createdAt,
   };
 };
 
-export async function fetchLiveProducts(forceRefresh = false) {
-  if (!firebaseClientReady || !db) return [];
+const mapFirestoreProduct = (docSnap) => formatRawProduct(docSnap.data(), docSnap.id);
 
+/**
+ * Fallback: Fetch products from Backend REST API (/api/products)
+ */
+async function fetchProductsFromRestApi() {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+  const url = `${apiBase}/api/products`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`REST API returned ${response.status}`);
+  }
+  const data = await response.json();
+  if (!Array.isArray(data)) {
+    throw new Error('Invalid products array from REST API');
+  }
+  return data.map((item) => formatRawProduct(item, item.id)).filter(Boolean);
+}
+
+export async function fetchLiveProducts(forceRefresh = false) {
   const now = Date.now();
 
   // Return memory cache if fresh
@@ -78,15 +101,35 @@ export async function fetchLiveProducts(forceRefresh = false) {
   }
 
   inFlightPromise = (async () => {
-    try {
-      const q = query(collection(db, 'products'), where('is_active', '==', true));
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(mapFirestoreProduct);
-      
+    let items = [];
+
+    // 1. Try fetching from Cloud Firestore Web SDK first
+    if (firebaseClientReady && db) {
+      try {
+        const q = query(collection(db, 'products'), where('is_active', '==', true));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          items = snapshot.docs.map(mapFirestoreProduct);
+        }
+      } catch (firestoreError) {
+        console.warn('Direct Firestore SDK fetch failed, falling back to REST API:', firestoreError?.message || firestoreError);
+      }
+    }
+
+    // 2. If Firestore direct fetch returned empty or failed, fetch via backend REST API
+    if (!items || items.length === 0) {
+      try {
+        items = await fetchProductsFromRestApi();
+      } catch (restError) {
+        console.error('REST API products fetch failed:', restError?.message || restError);
+      }
+    }
+
+    if (items && items.length > 0) {
       memoryCache = items;
       lastFetchTime = Date.now();
 
-      // Also persist to sessionStorage for instant cross-page navigation
+      // Persist to sessionStorage for instant cross-page navigation
       try {
         sessionStorage.setItem('bell_cached_products', JSON.stringify(items));
         sessionStorage.setItem('bell_cached_time', String(lastFetchTime));
@@ -95,13 +138,13 @@ export async function fetchLiveProducts(forceRefresh = false) {
       }
 
       return items;
-    } catch (error) {
-      console.error('Failed to load live products:', error);
-      return memoryCache || [];
-    } finally {
-      inFlightPromise = null;
     }
-  })();
+
+    // If both failed, return memoryCache or empty array
+    return memoryCache || [];
+  })().finally(() => {
+    inFlightPromise = null;
+  });
 
   return inFlightPromise;
-}
+}
