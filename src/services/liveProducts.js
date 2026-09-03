@@ -7,7 +7,7 @@ let memoryCache = null;
 let lastFetchTime = 0;
 let inFlightPromise = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes memory cache
-const STORAGE_KEY = 'bell_cached_products_v2';
+const STORAGE_KEY = 'bell_cached_products_v3';
 
 const formatRawProduct = (data, id) => {
   if (!data) return null;
@@ -89,10 +89,14 @@ async function fetchProductsFromRestApi(timeoutMs = 4000) {
       throw new Error(`REST API returned ${response.status}`);
     }
     const data = await response.json();
-    if (!Array.isArray(data)) {
-      throw new Error('Invalid products array from REST API');
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('REST API returned empty products array');
     }
-    return data.map((item) => formatRawProduct(item, item.id)).filter(Boolean);
+    const items = data.map((item) => formatRawProduct(item, item.id)).filter(Boolean);
+    if (items.length === 0) {
+      throw new Error('No valid products parsed from REST API');
+    }
+    return items;
   } catch (err) {
     clearTimeout(timeoutId);
     throw err;
@@ -100,7 +104,7 @@ async function fetchProductsFromRestApi(timeoutMs = 4000) {
 }
 
 /**
- * Fetch from Cloud Firestore with strict timeout to prevent 15-second hangs
+ * Fetch from Cloud Firestore with strict timeout to prevent hangs
  */
 async function fetchProductsFromFirestore(timeoutMs = 1500) {
   if (!firebaseClientReady || !db) {
@@ -115,10 +119,13 @@ async function fetchProductsFromFirestore(timeoutMs = 1500) {
       const snapshot = await getDocs(q);
       clearTimeout(timeout);
 
-      if (snapshot.empty) {
-        return resolve([]);
+      if (snapshot.empty || snapshot.docs.length === 0) {
+        return reject(new Error('Firestore snapshot empty'));
       }
-      const items = snapshot.docs.map(mapFirestoreProduct);
+      const items = snapshot.docs.map(mapFirestoreProduct).filter(Boolean);
+      if (items.length === 0) {
+        return reject(new Error('No valid products mapped from Firestore'));
+      }
       resolve(items);
     } catch (err) {
       clearTimeout(timeout);
@@ -150,11 +157,11 @@ export async function fetchLiveProducts(forceRefresh = false) {
         fetchProductsFromRestApi(3500),
       ]);
     } catch {
-      // If Promise.any rejected (both failed), try a final direct REST attempt
+      // If Promise.any rejected (both failed), try a direct REST attempt
       try {
         items = await fetchProductsFromRestApi(5000);
       } catch (fallbackErr) {
-        console.warn('All live product fetch strategies failed:', fallbackErr);
+        console.warn('All live product fetch strategies failed:', fallbackErr?.message || fallbackErr);
       }
     }
 

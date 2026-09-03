@@ -29,10 +29,29 @@ export function ShopPage({ fixedCategory = '' }) {
       const matchesSearch =
         !search ||
         `${p.name} ${p.brand}`.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        !category ||
-        (category === 'deals' ? !!p.salePrice : p.category.toLowerCase() === category.toLowerCase());
-      const matchesBrand = !brand || p.brand === brand;
+
+      const catNorm = (category || '').trim().toLowerCase();
+      const pCatNorm = (p.category || '').trim().toLowerCase();
+      const pBrandNorm = (p.brand || '').trim().toLowerCase();
+      const pNameNorm = (p.name || '').trim().toLowerCase();
+
+      let matchesCategory = true;
+      if (catNorm) {
+        if (catNorm === 'deals') {
+          matchesCategory = !!p.salePrice;
+        } else if (catNorm === 'iphone' || catNorm === 'apple') {
+          matchesCategory = pCatNorm === 'iphone' || pCatNorm === 'apple' || pBrandNorm === 'apple' || pNameNorm.includes('iphone');
+        } else if (catNorm === 'samsung') {
+          matchesCategory = pCatNorm === 'samsung' || pBrandNorm === 'samsung' || pNameNorm.includes('samsung');
+        } else if (catNorm === 'smartphones' || catNorm === 'phones') {
+          matchesCategory = pCatNorm === 'smartphones' || pCatNorm === 'phones' || pCatNorm === 'iphone' || pCatNorm === 'samsung' || pBrandNorm === 'apple' || pBrandNorm === 'samsung';
+        } else {
+          matchesCategory = pCatNorm === catNorm || pBrandNorm === catNorm || pNameNorm.includes(catNorm);
+        }
+      }
+
+      const brandNorm = (brand || '').trim().toLowerCase();
+      const matchesBrand = !brandNorm || pBrandNorm === brandNorm;
       const matchesStock = !stockOnly || p.stock > 0;
       const matchesSale = !saleOnly || !!p.salePrice;
       const matchesStorage =
