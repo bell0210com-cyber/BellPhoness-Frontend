@@ -1,6 +1,7 @@
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db, firebaseClientReady } from './firebaseClient';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
+import { getApiBaseUrl } from './apiConfig';
 
 let memoryCache = null;
 let lastFetchTime = 0;
@@ -79,7 +80,7 @@ async function fetchProductsFromRestApi(timeoutMs = 4000) {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+    const apiBase = getApiBaseUrl();
     const url = `${apiBase}/api/products`;
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);

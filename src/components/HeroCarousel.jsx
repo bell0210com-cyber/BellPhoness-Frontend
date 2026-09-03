@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
+import { getApiBaseUrl } from '../services/apiConfig';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 
-  (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://api.bellphoness.com');
+const baseUrl = getApiBaseUrl();
 
 const DEFAULT_SLIDES = [
   {

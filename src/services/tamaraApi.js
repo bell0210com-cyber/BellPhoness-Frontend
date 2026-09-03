@@ -1,7 +1,7 @@
 import { getAuth } from 'firebase/auth';
+import { getApiBaseUrl } from './apiConfig';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 
-  (window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://api.bellphoness.com');
+const API_BASE = getApiBaseUrl();
 
 async function authHeader() {
   const auth = getAuth();
