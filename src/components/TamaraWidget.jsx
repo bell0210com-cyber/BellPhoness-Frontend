@@ -23,7 +23,7 @@ export default function TamaraWidget({ amount = 0, inline = true }) {
       lang: 'en',
       country: 'AE',
       publicKey: publicKey,
-      env: import.meta.env.VITE_TAMARA_ENV || 'sandbox',
+      env: import.meta.env.VITE_TAMARA_ENV || 'production',
     };
 
     // Load Tamara widget CDN script once
