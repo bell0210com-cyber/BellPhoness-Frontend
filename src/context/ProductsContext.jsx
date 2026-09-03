@@ -3,22 +3,13 @@ import { fetchLiveProducts } from '../services/liveProducts';
 
 const ProductsContext = createContext();
 
-const LOCAL_STORAGE_KEY = 'bell_cached_products_v3';
+const LOCAL_STORAGE_KEY = 'bell_cached_products_v4';
 
 const getInitialProducts = () => {
   try {
-    // 1. Check versioned localStorage for instant boot
     const local = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (local) {
       const parsed = JSON.parse(local);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-    // 2. Check previous cache key as fallback
-    const prev = localStorage.getItem('bell_cached_products_v2') || sessionStorage.getItem('bell_cached_products');
-    if (prev) {
-      const parsed = JSON.parse(prev);
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed;
       }

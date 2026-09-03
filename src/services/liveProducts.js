@@ -7,7 +7,7 @@ let memoryCache = null;
 let lastFetchTime = 0;
 let inFlightPromise = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes memory cache
-const STORAGE_KEY = 'bell_cached_products_v3';
+const STORAGE_KEY = 'bell_cached_products_v4';
 
 const formatRawProduct = (data, id) => {
   if (!data) return null;
@@ -45,10 +45,21 @@ const formatRawProduct = (data, id) => {
   if (firstVariant.color) specs.Color = firstVariant.color;
 
   let createdAt = new Date().toISOString();
-  if (data.createdAt?.toDate) {
-    createdAt = data.createdAt.toDate().toISOString();
-  } else if (data.createdAt) {
-    createdAt = new Date(data.createdAt).toISOString();
+  if (data.createdAt?.toDate && typeof data.createdAt.toDate === 'function') {
+    try {
+      createdAt = data.createdAt.toDate().toISOString();
+    } catch {}
+  } else if (data.createdAt?._seconds) {
+    try {
+      createdAt = new Date(data.createdAt._seconds * 1000).toISOString();
+    } catch {}
+  } else if (typeof data.createdAt === 'string' || typeof data.createdAt === 'number') {
+    try {
+      const dt = new Date(data.createdAt);
+      if (!isNaN(dt.getTime())) {
+        createdAt = dt.toISOString();
+      }
+    } catch {}
   }
 
   return {
@@ -73,16 +84,23 @@ const formatRawProduct = (data, id) => {
 const mapFirestoreProduct = (docSnap) => formatRawProduct(docSnap.data(), docSnap.id);
 
 /**
- * Fetch products from Backend REST API (/api/products) with fast timeout
+ * Fetch products from Backend REST API (/api/products)
  */
-async function fetchProductsFromRestApi(timeoutMs = 4000) {
+async function fetchProductsFromRestApi(timeoutMs = 5000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const apiBase = getApiBaseUrl();
     const url = `${apiBase}/api/products`;
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller.signal,
+    });
     clearTimeout(timeoutId);
 
     if (!response.ok) {
@@ -104,9 +122,9 @@ async function fetchProductsFromRestApi(timeoutMs = 4000) {
 }
 
 /**
- * Fetch from Cloud Firestore with strict timeout to prevent hangs
+ * Fetch from Cloud Firestore SDK
  */
-async function fetchProductsFromFirestore(timeoutMs = 1500) {
+async function fetchProductsFromFirestore(timeoutMs = 2000) {
   if (!firebaseClientReady || !db) {
     throw new Error('Firebase client not ready');
   }
@@ -150,16 +168,16 @@ export async function fetchLiveProducts(forceRefresh = false) {
   inFlightPromise = (async () => {
     let items = [];
 
-    // Attempt fast Firestore fetch and REST API concurrently for lowest possible latency
+    // Attempt REST API (fastest & most reliable on mobile) and Firestore concurrently
     try {
       items = await Promise.any([
-        fetchProductsFromFirestore(1500),
-        fetchProductsFromRestApi(3500),
+        fetchProductsFromRestApi(4000),
+        fetchProductsFromFirestore(2000),
       ]);
     } catch {
-      // If Promise.any rejected (both failed), try a direct REST attempt
+      // If Promise.any rejected (both timed out or network issues), try a direct REST attempt
       try {
-        items = await fetchProductsFromRestApi(5000);
+        items = await fetchProductsFromRestApi(6000);
       } catch (fallbackErr) {
         console.warn('All live product fetch strategies failed:', fallbackErr?.message || fallbackErr);
       }
