@@ -12,10 +12,31 @@ export default function TabbyCallbackPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null); // 'approved' | 'rejected' | 'canceled' | 'error'
   const [error, setError] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const orderId = params.get('orderId') || params.get('order_id') || params.get('order_reference_id') || '';
   const paymentStatus = (params.get('paymentStatus') || params.get('payment_status') || 'approved').toLowerCase();
   const paymentId = params.get('paymentId') || params.get('payment_id') || '';
+  const rawRejectionReason =
+    params.get('rejection_reason_code') ||
+    params.get('rejection_reason') ||
+    params.get('error') ||
+    params.get('reason') ||
+    '';
+
+  const formatRejectionMessage = (rawReason, fallbackMsg) => {
+    const lower = (rawReason || '').toLowerCase();
+    if (lower.includes('order_amount_too_high') || lower.includes('amount too high')) {
+      return 'Your order amount exceeds your available Tabby limit. Please try Tamara or Cash on Delivery instead.';
+    }
+    if (lower.includes('order_amount_too_low') || lower.includes('amount too low')) {
+      return 'Your order amount is below the minimum required for Tabby. Please try Tamara or Cash on Delivery instead.';
+    }
+    if (rawReason && !rawReason.includes('5000000') && !lower.includes('sandbox') && !lower.includes('reserved decline test number')) {
+      return rawReason;
+    }
+    return fallbackMsg || "Don't worry — you can try Tamara or Cash on Delivery instead.";
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -23,14 +44,26 @@ export default function TabbyCallbackPage() {
     async function processCallback() {
       // 1. Immediate handling for explicit rejected / failed status
       if (paymentStatus === 'rejected' || paymentStatus === 'failed' || paymentStatus === 'declined') {
+        const msg = formatRejectionMessage(
+          rawRejectionReason,
+          "Don't worry — you can try Tamara or Cash on Delivery instead."
+        );
         if (orderId) {
           try {
-            await tabbyApi.verifyReturn(orderId, paymentStatus, paymentId);
+            const res = await tabbyApi.verifyReturn(orderId, paymentStatus, paymentId);
+            if (res?.rejection_reason || res?.message || res?.error) {
+              const resMsg = formatRejectionMessage(
+                res.rejection_reason || res.message || res.error,
+                msg
+              );
+              if (mounted) setRejectionReason(resMsg);
+            }
           } catch (e) {
             console.debug('Tabby verifyReturn notice:', e);
           }
         }
         if (mounted) {
+          setRejectionReason(msg);
           setStatus('rejected');
           setLoading(false);
         }
@@ -67,10 +100,20 @@ export default function TabbyCallbackPage() {
             clearCart();
             setStatus('approved');
           } else if (paymentStatus === 'rejected' || paymentStatus === 'failed' || paymentStatus === 'declined') {
+            const msg = formatRejectionMessage(
+              res.rejection_reason || res.message || res.error || rawRejectionReason,
+              "Don't worry — you can try Tamara or Cash on Delivery instead."
+            );
+            setRejectionReason(msg);
             setStatus('rejected');
           } else if (paymentStatus === 'canceled' || paymentStatus === 'cancelled') {
             setStatus('canceled');
           } else {
+            const msg = formatRejectionMessage(
+              res.rejection_reason || res.message || res.error || rawRejectionReason,
+              "Don't worry — you can try Tamara or Cash on Delivery instead."
+            );
+            setRejectionReason(msg);
             setStatus('rejected');
           }
         }
@@ -81,12 +124,21 @@ export default function TabbyCallbackPage() {
             clearCart();
             setStatus('approved');
           } else if (paymentStatus === 'rejected' || paymentStatus === 'failed' || paymentStatus === 'declined') {
+            const msg = formatRejectionMessage(
+              err.message || rawRejectionReason,
+              "Don't worry — you can try Tamara or Cash on Delivery instead."
+            );
+            setRejectionReason(msg);
             setStatus('rejected');
           } else if (paymentStatus === 'canceled' || paymentStatus === 'cancelled') {
             setStatus('canceled');
           } else {
+            const msg = formatRejectionMessage(
+              err.message,
+              'The payment could not be processed by Tabby. Please try another payment method or contact support.'
+            );
             setStatus('error');
-            setError(err.message || 'Unable to verify payment status with Tabby.');
+            setError(msg);
           }
         }
       } finally {
@@ -101,7 +153,7 @@ export default function TabbyCallbackPage() {
     return () => {
       mounted = false;
     };
-  }, [orderId, paymentStatus, paymentId, clearCart]);
+  }, [orderId, paymentStatus, paymentId, rawRejectionReason, clearCart]);
 
   if (loading) {
     return (
@@ -175,7 +227,7 @@ export default function TabbyCallbackPage() {
         <div className="shell empty-state">
           <span style={{ color: 'var(--gold, #be9a5d)', fontSize: 32 }}>✕</span>
           <h2>Your Tabby application was not approved.</h2>
-          <p>Don&apos;t worry — you can try Tamara or Cash on Delivery instead.</p>
+          <p>{rejectionReason || "Don't worry — you can try Tamara or Cash on Delivery instead."}</p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
             <Link className="button button-gold" to="/checkout">
               RETURN TO CHECKOUT →

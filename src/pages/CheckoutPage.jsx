@@ -345,7 +345,20 @@ export default function CheckoutPage() {
       }
     } catch (requestError) {
       console.error('Checkout error:', requestError);
-      setError(requestError.message || 'An error occurred during checkout.');
+      let errorMsg = requestError.message || 'An error occurred during checkout.';
+      const lower = errorMsg.toLowerCase();
+      if (
+        lower.includes('order_amount_too_high') ||
+        lower.includes('amount too high') ||
+        requestError.code === 'order_amount_too_high'
+      ) {
+        errorMsg = 'Your order amount exceeds your available Tabby limit. Please try Tamara or Cash on Delivery instead.';
+      } else if (lower.includes('order_amount_too_low') || lower.includes('amount too low')) {
+        errorMsg = 'Your order amount is below the minimum required for Tabby. Please try Tamara or Cash on Delivery instead.';
+      } else if (lower.includes('5000000') || lower.includes('sandbox') || lower.includes('reserved decline test number')) {
+        errorMsg = 'Your Tabby application was not approved. Please try Tamara or Cash on Delivery instead.';
+      }
+      setError(errorMsg);
       setPlacing(false);
     }
   };
