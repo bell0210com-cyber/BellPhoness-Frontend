@@ -282,7 +282,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [orderId, setOrderId] = useState('');
 
-  const updateAddress = (key, value) => setAddress((current) => ({ ...current, [key]: value }));
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethod(method);
+    setError('');
+  };
 
   const dubaiOrder = isDubai(address.emirate);
 
@@ -357,16 +360,34 @@ export default function CheckoutPage() {
       console.error('Checkout error:', requestError);
       let errorMsg = requestError.message || 'An error occurred during checkout.';
       const lower = errorMsg.toLowerCase();
+      const code = (requestError.code || '').toLowerCase();
+
       if (
         lower.includes('order_amount_too_high') ||
         lower.includes('amount too high') ||
-        requestError.code === 'order_amount_too_high'
+        code === 'order_amount_too_high'
       ) {
         errorMsg = 'Your order amount exceeds your available Tabby limit. Please try Tamara or Cash on Delivery instead.';
-      } else if (lower.includes('order_amount_too_low') || lower.includes('amount too low')) {
+      } else if (
+        lower.includes('order_amount_too_low') ||
+        lower.includes('amount too low') ||
+        code === 'order_amount_too_low'
+      ) {
         errorMsg = 'Your order amount is below the minimum required for Tabby. Please try Tamara or Cash on Delivery instead.';
-      } else if (lower.includes('5000000') || lower.includes('sandbox') || lower.includes('reserved decline test number')) {
-        errorMsg = 'Your Tabby application was not approved. Please try Tamara or Cash on Delivery instead.';
+      } else if (
+        lower.includes('rejected') ||
+        lower.includes('not_available') ||
+        lower.includes('not available') ||
+        lower.includes('not eligible') ||
+        lower.includes('not approved') ||
+        lower.includes('5000000') ||
+        lower.includes('sandbox') ||
+        lower.includes('reserved decline test number') ||
+        code === 'rejected' ||
+        code === 'not_available' ||
+        paymentMethod === 'tabby'
+      ) {
+        errorMsg = 'You are not eligible to use Tabby for this order. Please try another payment method like Tamara or Cash on Delivery.';
       }
       setError(errorMsg);
       setPlacing(false);
@@ -459,7 +480,7 @@ export default function CheckoutPage() {
           {step === 3 && (
             <PaymentStep
               paymentMethod={paymentMethod}
-              setPaymentMethod={setPaymentMethod}
+              setPaymentMethod={handlePaymentMethodChange}
               dubaiOrder={dubaiOrder}
               price={total}
               next={() => setStep(4)}

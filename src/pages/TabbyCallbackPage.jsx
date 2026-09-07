@@ -32,10 +32,22 @@ export default function TabbyCallbackPage() {
     if (lower.includes('order_amount_too_low') || lower.includes('amount too low')) {
       return 'Your order amount is below the minimum required for Tabby. Please try Tamara or Cash on Delivery instead.';
     }
-    if (rawReason && !rawReason.includes('5000000') && !lower.includes('sandbox') && !lower.includes('reserved decline test number')) {
+    if (
+      lower.includes('rejected') ||
+      lower.includes('not_available') ||
+      lower.includes('not available') ||
+      lower.includes('not eligible') ||
+      lower.includes('not approved') ||
+      lower.includes('5000000') ||
+      lower.includes('sandbox') ||
+      lower.includes('reserved decline test number')
+    ) {
+      return 'You are not eligible to use Tabby for this order. Please try another payment method like Tamara or Cash on Delivery.';
+    }
+    if (rawReason && !rawReason.includes('_') && !rawReason.includes('{') && !rawReason.includes('5000000') && !lower.includes('sandbox')) {
       return rawReason;
     }
-    return fallbackMsg || "Don't worry — you can try Tamara or Cash on Delivery instead.";
+    return fallbackMsg || 'You are not eligible to use Tabby for this order. Please try another payment method like Tamara or Cash on Delivery.';
   };
 
   useEffect(() => {

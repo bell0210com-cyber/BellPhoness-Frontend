@@ -10,15 +10,19 @@ export default function TabbyCard({ price, currency = 'AED' }) {
 
     // Initialize official TabbyCard checkout snippet
     const initTabbyCard = () => {
-      if (window.TabbyCard) {
-        new window.TabbyCard({
-          selector: '#tabbyCard',
-          currency: currency,
-          price: numericPrice.toFixed(2),
-          lang: 'en',
-          publicKey: TABBY_PUBLIC_KEY,
-          merchantCode: TABBY_MERCHANT_CODE,
-        });
+      try {
+        if (typeof window.TabbyCard === 'function') {
+          new window.TabbyCard({
+            selector: '#tabbyCard',
+            currency: currency,
+            price: numericPrice.toFixed(2),
+            lang: 'en',
+            publicKey: TABBY_PUBLIC_KEY,
+            merchantCode: TABBY_MERCHANT_CODE,
+          });
+        }
+      } catch (err) {
+        console.warn('[TabbyCard] initialization notice:', err);
       }
     };
 

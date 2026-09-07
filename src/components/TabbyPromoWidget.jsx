@@ -15,16 +15,20 @@ export default function TabbyPromoWidget({
 
     // Tabby official on-site messaging initialization function
     const initTabby = () => {
-      if (window.TabbyPromo) {
-        new window.TabbyPromo({
-          selector: `#${containerId}`,
-          currency: currency,
-          price: numericPrice.toString(),
-          lang: 'en',
-          source: source,
-          publicKey: TABBY_PUBLIC_KEY,
-          merchantCode: TABBY_MERCHANT_CODE,
-        });
+      try {
+        if (typeof window.TabbyPromo === 'function') {
+          new window.TabbyPromo({
+            selector: `#${containerId}`,
+            currency: currency,
+            price: numericPrice.toString(),
+            lang: 'en',
+            source: source,
+            publicKey: TABBY_PUBLIC_KEY,
+            merchantCode: TABBY_MERCHANT_CODE,
+          });
+        }
+      } catch (err) {
+        console.warn('[TabbyPromo] initialization notice:', err);
       }
     };
 
