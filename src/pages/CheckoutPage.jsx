@@ -282,6 +282,8 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [orderId, setOrderId] = useState('');
 
+  const updateAddress = (key, value) => setAddress((current) => ({ ...current, [key]: value }));
+
   const handlePaymentMethodChange = (method) => {
     setPaymentMethod(method);
     setError('');
