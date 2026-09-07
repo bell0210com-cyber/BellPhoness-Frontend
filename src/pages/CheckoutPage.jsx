@@ -12,6 +12,7 @@ import TamaraWidget from '../components/TamaraWidget';
 import TabbyPromoWidget from '../components/TabbyPromoWidget';
 import TabbyCard from '../components/TabbyCard';
 import TabbyLogo from '../components/TabbyLogo';
+import tabbyIcon from '../assets/payment-methods/tabby-icon.svg';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -191,7 +192,16 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
               <strong style={{ fontSize: 14, color: '#111' }}>
                 Pay later with Tabby
               </strong>
-              <TabbyLogo width={76} height={26} />
+              <img
+                src={tabbyIcon}
+                alt="Tabby"
+                style={{
+                  height: 28,
+                  width: 'auto',
+                  display: 'block',
+                  borderRadius: 4,
+                }}
+              />
             </div>
           </label>
 
