@@ -473,7 +473,7 @@ export default function CheckoutPage() {
                 paymentMethod === 'tamara'
                   ? 'You will be securely redirected to Tamara to complete your 4 interest-free installments.'
                   : paymentMethod === 'tabby'
-                  ? 'You will be securely redirected to Tabby to complete your 4 interest-free payments.'
+                  ? 'You will be securely redirected to Tabby to complete your payment.'
                   : dubaiOrder
                   ? 'Confirm your order below. Payment will be collected on delivery.'
                   : 'Confirm your order below. Our team will contact you to arrange prepayment before shipping.'
