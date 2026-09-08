@@ -26,28 +26,13 @@ export default function TabbyCallbackPage() {
 
   const formatRejectionMessage = (rawReason, fallbackMsg) => {
     const lower = (rawReason || '').toLowerCase();
-    if (lower.includes('order_amount_too_high') || lower.includes('amount too high')) {
-      return 'Your order amount exceeds your available Tabby limit. Please try Tamara or Cash on Delivery instead.';
+    if (lower.includes('order_amount_too_high') || lower.includes('amount too high') || lower.includes('above your current spending limit')) {
+      return 'This purchase is above your current spending limit with Tabby, try a smaller cart or use another payment method.';
     }
-    if (lower.includes('order_amount_too_low') || lower.includes('amount too low')) {
-      return 'Your order amount is below the minimum required for Tabby. Please try Tamara or Cash on Delivery instead.';
+    if (lower.includes('order_amount_too_low') || lower.includes('amount too low') || lower.includes('below the minimum amount required')) {
+      return 'The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method.';
     }
-    if (
-      lower.includes('rejected') ||
-      lower.includes('not_available') ||
-      lower.includes('not available') ||
-      lower.includes('not eligible') ||
-      lower.includes('not approved') ||
-      lower.includes('5000000') ||
-      lower.includes('sandbox') ||
-      lower.includes('reserved decline test number')
-    ) {
-      return 'You are not eligible to use Tabby for this order. Please try another payment method like Tamara or Cash on Delivery.';
-    }
-    if (rawReason && !rawReason.includes('_') && !rawReason.includes('{') && !rawReason.includes('5000000') && !lower.includes('sandbox')) {
-      return rawReason;
-    }
-    return fallbackMsg || 'You are not eligible to use Tabby for this order. Please try another payment method like Tamara or Cash on Delivery.';
+    return fallbackMsg || 'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
   };
 
   useEffect(() => {

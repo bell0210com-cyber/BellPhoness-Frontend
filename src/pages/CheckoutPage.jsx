@@ -12,7 +12,6 @@ import TamaraWidget from '../components/TamaraWidget';
 import TabbyPromoWidget from '../components/TabbyPromoWidget';
 import TabbyCard from '../components/TabbyCard';
 import TabbyLogo from '../components/TabbyLogo';
-import tabbyIcon from '../assets/payment-methods/tabby-icon.svg';
 
 const formatPrice = (value) =>
   new Intl.NumberFormat('en-AE', {
@@ -193,13 +192,12 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
                 Pay later with Tabby
               </strong>
               <img
-                src={tabbyIcon}
+                src="https://assets.tabby.ai/assets/tabby-badge.png"
                 alt="Tabby"
                 style={{
-                  height: 28,
-                  width: 'auto',
+                  width: 80,
+                  height: 'auto',
                   display: 'block',
-                  borderRadius: 4,
                 }}
               />
             </div>
@@ -361,35 +359,35 @@ export default function CheckoutPage() {
     } catch (requestError) {
       console.error('Checkout error:', requestError);
       let errorMsg = requestError.message || 'An error occurred during checkout.';
+      const rejectionReason = (
+        requestError.rejection_reason ||
+        requestError.code ||
+        ''
+      ).toLowerCase();
       const lower = errorMsg.toLowerCase();
-      const code = (requestError.code || '').toLowerCase();
 
-      if (
-        lower.includes('order_amount_too_high') ||
-        lower.includes('amount too high') ||
-        code === 'order_amount_too_high'
-      ) {
-        errorMsg = 'Your order amount exceeds your available Tabby limit. Please try Tamara or Cash on Delivery instead.';
-      } else if (
-        lower.includes('order_amount_too_low') ||
-        lower.includes('amount too low') ||
-        code === 'order_amount_too_low'
-      ) {
-        errorMsg = 'Your order amount is below the minimum required for Tabby. Please try Tamara or Cash on Delivery instead.';
-      } else if (
-        lower.includes('rejected') ||
-        lower.includes('not_available') ||
-        lower.includes('not available') ||
-        lower.includes('not eligible') ||
-        lower.includes('not approved') ||
-        lower.includes('5000000') ||
-        lower.includes('sandbox') ||
-        lower.includes('reserved decline test number') ||
-        code === 'rejected' ||
-        code === 'not_available' ||
-        paymentMethod === 'tabby'
-      ) {
-        errorMsg = 'You are not eligible to use Tabby for this order. Please try another payment method like Tamara or Cash on Delivery.';
+      if (paymentMethod === 'tabby') {
+        if (
+          rejectionReason === 'order_amount_too_high' ||
+          lower.includes('order_amount_too_high') ||
+          lower.includes('above your current spending limit') ||
+          lower.includes('amount too high')
+        ) {
+          errorMsg =
+            'This purchase is above your current spending limit with Tabby, try a smaller cart or use another payment method.';
+        } else if (
+          rejectionReason === 'order_amount_too_low' ||
+          lower.includes('order_amount_too_low') ||
+          lower.includes('below the minimum amount required') ||
+          lower.includes('amount too low')
+        ) {
+          errorMsg =
+            'The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method.';
+        } else {
+          // not_available or any other Tabby rejection
+          errorMsg =
+            'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
+        }
       }
       setError(errorMsg);
       setPlacing(false);

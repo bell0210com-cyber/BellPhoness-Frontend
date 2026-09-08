@@ -26,7 +26,11 @@ export const tabbyApi = {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(data.message || data.error || 'Failed to initiate Tabby checkout.');
+      const err = new Error(data.message || data.error || 'Failed to initiate Tabby checkout.');
+      err.rejection_reason = data.rejection_reason || data.code || null;
+      err.code = data.code || data.rejection_reason || null;
+      err.details = data.details || null;
+      throw err;
     }
     return data;
   },
