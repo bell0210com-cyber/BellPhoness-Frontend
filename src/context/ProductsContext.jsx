@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { fetchLiveProducts } from '../services/liveProducts';
 
 const ProductsContext = createContext();
@@ -21,15 +22,18 @@ const getInitialProducts = () => {
 };
 
 export function ProductsProvider({ children }) {
+  const location = useLocation();
   const initialData = getInitialProducts();
   const [liveProducts, setLiveProducts] = useState(initialData);
   const [loading, setLoading] = useState(initialData.length === 0);
+  const hasLoadedRef = useRef(false);
 
   const loadProducts = useCallback(async (forceRefresh = false) => {
     try {
       const items = await fetchLiveProducts(forceRefresh);
       if (Array.isArray(items) && items.length > 0) {
         setLiveProducts(items);
+        hasLoadedRef.current = true;
         try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
         } catch {
@@ -44,12 +48,24 @@ export function ProductsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-    loadProducts();
-    return () => {
-      mounted = false;
-    };
-  }, [loadProducts]);
+    // Prevent redundant background fetch on checkout, order confirmation, and payment callback pages
+    const path = (location.pathname || '').toLowerCase();
+    const isCheckoutOrCallback =
+      path.startsWith('/checkout') ||
+      path.includes('/callback') ||
+      path.includes('tabby') ||
+      path.includes('tamara') ||
+      path.startsWith('/orders');
+
+    if (isCheckoutOrCallback) {
+      return;
+    }
+
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadProducts();
+    }
+  }, [loadProducts, location.pathname]);
 
   const value = useMemo(
     () => ({
@@ -58,6 +74,7 @@ export function ProductsProvider({ children }) {
       isRefreshing: loading && liveProducts.length > 0,
       getProduct: (id) => liveProducts.find((p) => p.id === id),
       refreshProducts: () => loadProducts(true),
+      loadProducts,
     }),
     [liveProducts, loading, loadProducts]
   );
@@ -69,4 +86,13 @@ export function ProductsProvider({ children }) {
   );
 }
 
-export const useProducts = () => useContext(ProductsContext);
+export const useProducts = () => {
+  const ctx = useContext(ProductsContext);
+  // Auto-trigger product loading if a consumer component specifically requires products
+  useEffect(() => {
+    if (ctx && ctx.products.length === 0 && !ctx.loading && ctx.loadProducts) {
+      ctx.loadProducts();
+    }
+  }, [ctx]);
+  return ctx;
+};
