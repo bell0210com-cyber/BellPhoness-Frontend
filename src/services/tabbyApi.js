@@ -85,7 +85,12 @@ export const tabbyApi = {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(data.message || 'Failed to verify Tabby return payment.');
+      const is429 = res.status === 429;
+      const msg = data.message || (is429 ? 'Too many requests, please try again later.' : 'Failed to verify Tabby return payment.');
+      const err = new Error(msg);
+      err.status = res.status;
+      err.isRateLimited = is429;
+      throw err;
     }
     return data;
   },
