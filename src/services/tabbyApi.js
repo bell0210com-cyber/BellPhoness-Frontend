@@ -60,7 +60,7 @@ export const tabbyApi = {
    * Verifies return status when customer returns from Tabby payment portal
    * POST /api/tabby/verify-return
    */
-  verifyReturn: async (orderId, paymentStatus, paymentId) => {
+  verifyReturn: async (orderId, paymentStatus, paymentId, options = {}) => {
     const auth = getAuth();
     const user = auth.currentUser;
     const headers = { 'Content-Type': 'application/json' };
@@ -74,9 +74,11 @@ export const tabbyApi = {
       res = await fetch(getEndpoint('/api/tabby/verify-return'), {
         method: 'POST',
         headers,
+        signal: options.signal,
         body: JSON.stringify({ orderId, paymentStatus, paymentId }),
       });
     } catch (networkError) {
+      if (options.signal?.aborted) return { success: false, aborted: true };
       console.error('[Tabby API] verifyReturn connection failure:', networkError);
       throw new Error('Unable to connect to the payment verification server.');
     }
