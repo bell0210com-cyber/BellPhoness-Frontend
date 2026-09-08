@@ -2,11 +2,7 @@ import { getAuth } from 'firebase/auth';
 import { getApiBaseUrl } from './apiConfig';
 
 const getEndpoint = (path) => {
-  const base = (
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    getApiBaseUrl()
-  ).replace(/\/+$/, '');
+  const base = getApiBaseUrl().replace(/\/+$/, '');
   return `${base}${path}`;
 };
 
@@ -25,24 +21,60 @@ export const tabbyApi = {
    */
   createCheckoutSession: async (payload) => {
     const headers = await authHeader();
+    const endpoint = getEndpoint('/api/tabby/create-checkout');
     let res;
+
     try {
-      res = await fetch(getEndpoint('/api/tabby/create-checkout'), {
+      res = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
       });
     } catch (networkError) {
-      console.error('[Tabby API] Connection failure:', networkError);
-      const isLocal =
-        typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const msg = isLocal
-        ? 'Unable to connect to the backend server (http://localhost:5000). Please ensure the backend is running.'
-        : 'Unable to connect to the payment server. Please check your internet connection or try another payment method.';
-      const err = new Error(msg);
-      err.isNetworkError = true;
-      throw err;
+      console.warn('[Tabby API] Primary connection attempt failed, trying fallback/retry...', networkError);
+
+      // 1. Try 127.0.0.1 if localhost failed (or vice-versa) for Windows IPv6/IPv4 binding differences
+      let fallbackEndpoint = null;
+      if (endpoint.includes('localhost:5000')) {
+        fallbackEndpoint = endpoint.replace('localhost:5000', '127.0.0.1:5000');
+      } else if (endpoint.includes('127.0.0.1:5000')) {
+        fallbackEndpoint = endpoint.replace('127.0.0.1:5000', 'localhost:5000');
+      }
+
+      if (fallbackEndpoint) {
+        try {
+          res = await fetch(fallbackEndpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+          });
+        } catch {
+          // fallback failed, continue to retry
+        }
+      }
+
+      // 2. If still unreached (e.g. backend was restarting), retry after 600ms
+      if (!res) {
+        await new Promise((r) => setTimeout(r, 600));
+        try {
+          res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+          });
+        } catch (retryError) {
+          console.error('[Tabby API] Connection failure after retries:', retryError);
+          const isLocal =
+            typeof window !== 'undefined' &&
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+          const msg = isLocal
+            ? 'Unable to connect to the backend server (http://localhost:5000). Please ensure the backend is running.'
+            : 'Unable to connect to the payment server. Please check your internet connection or try another payment method.';
+          const err = new Error(msg);
+          err.isNetworkError = true;
+          throw err;
+        }
+      }
     }
 
     const data = await res.json().catch(() => ({}));
@@ -79,8 +111,30 @@ export const tabbyApi = {
       });
     } catch (networkError) {
       if (options.signal?.aborted) return { success: false, aborted: true };
-      console.error('[Tabby API] verifyReturn connection failure:', networkError);
-      throw new Error('Unable to connect to the payment verification server.');
+
+      const endpoint = getEndpoint('/api/tabby/verify-return');
+      let fallbackEndpoint = null;
+      if (endpoint.includes('localhost:5000')) {
+        fallbackEndpoint = endpoint.replace('localhost:5000', '127.0.0.1:5000');
+      } else if (endpoint.includes('127.0.0.1:5000')) {
+        fallbackEndpoint = endpoint.replace('127.0.0.1:5000', 'localhost:5000');
+      }
+
+      if (fallbackEndpoint) {
+        try {
+          res = await fetch(fallbackEndpoint, {
+            method: 'POST',
+            headers,
+            signal: options.signal,
+            body: JSON.stringify({ orderId, paymentStatus, paymentId }),
+          });
+        } catch {}
+      }
+
+      if (!res) {
+        console.error('[Tabby API] verifyReturn connection failure:', networkError);
+        throw new Error('Unable to connect to the payment verification server.');
+      }
     }
 
     const data = await res.json().catch(() => ({}));
