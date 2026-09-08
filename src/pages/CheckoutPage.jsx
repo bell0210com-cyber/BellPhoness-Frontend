@@ -192,8 +192,12 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
                 Pay later with Tabby
               </strong>
               <img
-                src="https://assets.tabby.ai/assets/tabby-badge.png"
+                src="/assets/tabby-badge.png"
                 alt="Tabby"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/assets/tabby-badge.svg';
+                }}
                 style={{
                   width: 80,
                   height: 'auto',
@@ -366,7 +370,16 @@ export default function CheckoutPage() {
       ).toLowerCase();
       const lower = errorMsg.toLowerCase();
 
-      if (paymentMethod === 'tabby') {
+      if (
+        requestError.isNetworkError ||
+        lower.includes('unable to connect') ||
+        lower.includes('failed to fetch') ||
+        lower.includes('networkerror')
+      ) {
+        errorMsg =
+          requestError.message ||
+          'Unable to connect to the checkout server. Please verify your connection or try another payment method.';
+      } else if (paymentMethod === 'tabby') {
         if (
           rejectionReason === 'order_amount_too_high' ||
           lower.includes('order_amount_too_high') ||

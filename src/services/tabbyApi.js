@@ -1,7 +1,14 @@
 import { getAuth } from 'firebase/auth';
 import { getApiBaseUrl } from './apiConfig';
 
-const API_BASE = getApiBaseUrl();
+const getEndpoint = (path) => {
+  const base = (
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    getApiBaseUrl()
+  ).replace(/\/+$/, '');
+  return `${base}${path}`;
+};
 
 async function authHeader() {
   const auth = getAuth();
@@ -18,11 +25,25 @@ export const tabbyApi = {
    */
   createCheckoutSession: async (payload) => {
     const headers = await authHeader();
-    const res = await fetch(`${API_BASE}/api/tabby/create-checkout`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
+    let res;
+    try {
+      res = await fetch(getEndpoint('/api/tabby/create-checkout'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+    } catch (networkError) {
+      console.error('[Tabby API] Connection failure:', networkError);
+      const isLocal =
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const msg = isLocal
+        ? 'Unable to connect to the backend server (http://localhost:5000). Please ensure the backend is running.'
+        : 'Unable to connect to the payment server. Please check your internet connection or try another payment method.';
+      const err = new Error(msg);
+      err.isNetworkError = true;
+      throw err;
+    }
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -48,11 +69,17 @@ export const tabbyApi = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${API_BASE}/api/tabby/verify-return`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ orderId, paymentStatus, paymentId }),
-    });
+    let res;
+    try {
+      res = await fetch(getEndpoint('/api/tabby/verify-return'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ orderId, paymentStatus, paymentId }),
+      });
+    } catch (networkError) {
+      console.error('[Tabby API] verifyReturn connection failure:', networkError);
+      throw new Error('Unable to connect to the payment verification server.');
+    }
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -74,10 +101,16 @@ export const tabbyApi = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${API_BASE}/api/tabby/payment/${orderId}`, {
-      method: 'GET',
-      headers,
-    });
+    let res;
+    try {
+      res = await fetch(getEndpoint(`/api/tabby/payment/${orderId}`), {
+        method: 'GET',
+        headers,
+      });
+    } catch (networkError) {
+      console.error('[Tabby API] getPaymentStatus connection failure:', networkError);
+      throw new Error('Unable to fetch payment status from the server.');
+    }
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
