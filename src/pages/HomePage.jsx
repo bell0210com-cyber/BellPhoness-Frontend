@@ -41,15 +41,47 @@ function ProductSection({ label, title, products, loading }) {
 
 export default function HomePage() {
   const { products, loading } = useProducts();
-  let featured = products.filter((p) => p.featured).slice(0, 4);
-  if (featured.length === 0 && products.length > 0) {
-    featured = products.slice(0, 4);
+  // 1. Featured Selection (guarantee up to 4 items)
+  const featuredSet = new Set();
+  const featured = [];
+  for (const p of products) {
+    if (p.featured && featured.length < 4) {
+      featured.push(p);
+      featuredSet.add(p.id);
+    }
+  }
+  for (const p of products) {
+    if (featured.length >= 4) break;
+    if (!featuredSet.has(p.id)) {
+      featured.push(p);
+      featuredSet.add(p.id);
+    }
   }
 
-  let bestsellersAndNew = products.filter((p) => p.bestseller || p.isNewArrival).slice(0, 4);
-  if (bestsellersAndNew.length === 0 && products.length > 0) {
-    // Fallback: show the next 4 products (or just most recent 4)
-    bestsellersAndNew = products.length > 4 ? products.slice(4, 8) : products.slice(0, 4);
+  // 2. New Arrivals & Bestsellers Selection (guarantee up to 4 items)
+  const bestsellersSet = new Set();
+  const bestsellersAndNew = [];
+  for (const p of products) {
+    if ((p.bestseller || p.isNewArrival || p.newArrival || p.isNew) && bestsellersAndNew.length < 4) {
+      bestsellersAndNew.push(p);
+      bestsellersSet.add(p.id);
+    }
+  }
+  // Fill up to 4 with other products not in this section (preferring those not in featured)
+  for (const p of products) {
+    if (bestsellersAndNew.length >= 4) break;
+    if (!bestsellersSet.has(p.id) && !featuredSet.has(p.id)) {
+      bestsellersAndNew.push(p);
+      bestsellersSet.add(p.id);
+    }
+  }
+  // If still fewer than 4, fill with any remaining products
+  for (const p of products) {
+    if (bestsellersAndNew.length >= 4) break;
+    if (!bestsellersSet.has(p.id)) {
+      bestsellersAndNew.push(p);
+      bestsellersSet.add(p.id);
+    }
   }
 
   return (
