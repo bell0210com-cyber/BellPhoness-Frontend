@@ -52,6 +52,8 @@ import {
   AdminHeroSlideForm,
 } from './pages/AdminHeroPages';
 
+import AdminRoute from './components/AdminRoute';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -208,62 +210,62 @@ export default function App() {
 
             <Route
               path="/admin/dashboard"
-              element={<AdminDashboard />}
+              element={<AdminRoute><AdminDashboard /></AdminRoute>}
             />
 
             <Route
               path="/admin/products"
-              element={<AdminProductsPage />}
+              element={<AdminRoute><AdminProductsPage /></AdminRoute>}
             />
 
             <Route
               path="/admin/products/add"
-              element={<AdminProductForm />}
+              element={<AdminRoute><AdminProductForm /></AdminRoute>}
             />
 
             <Route
               path="/admin/products/edit/:id"
-              element={<AdminProductForm />}
+              element={<AdminRoute><AdminProductForm /></AdminRoute>}
             />
 
             <Route
               path="/admin/orders"
-              element={<AdminOrdersPage />}
+              element={<AdminRoute><AdminOrdersPage /></AdminRoute>}
             />
 
             <Route
               path="/admin/orders/:id"
-              element={<AdminOrderDetailPage />}
+              element={<AdminRoute><AdminOrderDetailPage /></AdminRoute>}
             />
 
             <Route
               path="/admin/customers"
-              element={<AdminCustomersPage />}
+              element={<AdminRoute><AdminCustomersPage /></AdminRoute>}
             />
 
             <Route
               path="/admin/reviews"
-              element={<AdminReviewsPage />}
+              element={<AdminRoute><AdminReviewsPage /></AdminRoute>}
             />
 
             <Route
               path="/admin/settings"
-              element={<AdminSettingsPage />}
+              element={<AdminRoute><AdminSettingsPage /></AdminRoute>}
             />
 
             <Route
               path="/admin/hero"
-              element={<AdminHeroSlidesPage />}
+              element={<AdminRoute><AdminHeroSlidesPage /></AdminRoute>}
             />
             
             <Route
               path="/admin/hero/add"
-              element={<AdminHeroSlideForm />}
+              element={<AdminRoute><AdminHeroSlideForm /></AdminRoute>}
             />
             
             <Route
               path="/admin/hero/edit/:id"
-              element={<AdminHeroSlideForm />}
+              element={<AdminRoute><AdminHeroSlideForm /></AdminRoute>}
             />
 
             {/* FALLBACK */}

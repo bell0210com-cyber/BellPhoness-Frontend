@@ -12,7 +12,6 @@
     "@vitejs/plugin-react": "latest",
     "dotenv": "^17.4.2",
     "firebase": "latest",
-    "firebase-admin": "^14.2.0",
     "react": "latest",
     "react-dom": "latest",
     "react-phone-input-2": "^2.15.1",
