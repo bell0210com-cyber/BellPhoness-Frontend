@@ -63,7 +63,7 @@ export const tabbyApi = {
             body: JSON.stringify(payload),
           });
         } catch (retryError) {
-          console.error('[Tabby API] Connection failure after retries:', retryError);
+          console.warn('[Tabby API] Connection failure after retries:', retryError?.message || retryError);
           const isLocal =
             typeof window !== 'undefined' &&
             (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -133,7 +133,7 @@ export const tabbyApi = {
       }
 
       if (!res) {
-        console.error('[Tabby API] verifyReturn connection failure:', networkError);
+        console.warn('[Tabby API] verifyReturn connection failure:', networkError?.message || networkError);
         throw new Error('Unable to connect to the payment verification server.');
       }
     }
@@ -170,7 +170,7 @@ export const tabbyApi = {
         headers,
       });
     } catch (networkError) {
-      console.error('[Tabby API] getPaymentStatus connection failure:', networkError);
+      console.warn('[Tabby API] getPaymentStatus connection failure:', networkError?.message || networkError);
       throw new Error('Unable to fetch payment status from the server.');
     }
 

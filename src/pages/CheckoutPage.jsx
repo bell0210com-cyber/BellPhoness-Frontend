@@ -247,16 +247,35 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
 }
 
 function InfoStep({ title, text, next, button, disabled }) {
+  const handleClick = async (e) => {
+    e?.preventDefault?.();
+    if (disabled || !next) return;
+    try {
+      const result = next();
+      if (result && typeof result.then === 'function') {
+        await result;
+      }
+    } catch (err) {
+      // Safe catch to guarantee NO uncaught promise bubbles up
+      console.warn('[InfoStep] Handled step action notice:', err?.message || err);
+    }
+  };
+
   return (
     <div className="checkout-panel">
       <h2>{title}</h2>
       <p>{text}</p>
       {next ? (
-        <button className="button button-gold" onClick={next} disabled={disabled}>
+        <button
+          type="button"
+          className="button button-gold"
+          onClick={handleClick}
+          disabled={disabled}
+        >
           {disabled ? 'Processing…' : `${button} →`}
         </button>
       ) : (
-        <button className="button button-dark" disabled>
+        <button type="button" className="button button-dark" disabled>
           {button}
         </button>
       )}
@@ -288,7 +307,96 @@ export default function CheckoutPage() {
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
   const total = subtotal + (hasEmirate ? shipping : 0);
 
+  const getErrorMessage = (err, method) => {
+    if (!err) return 'An unexpected error occurred during checkout.';
+
+    const status = err.status;
+    const msg = err.message || '';
+    const lower = msg.toLowerCase();
+    const rejectionReason = (
+      err.rejection_reason ||
+      err.code ||
+      err.details?.rejection_reason_code ||
+      err.details?.rejection_reason ||
+      ''
+    ).toLowerCase();
+
+    // 401 Session expired: prompt login redirect
+    if (
+      status === 401 ||
+      lower.includes('invalid or expired authentication token') ||
+      lower.includes('please sign in') ||
+      lower.includes('auth/id-token-expired')
+    ) {
+      setTimeout(() => navigate('/login', { state: { from: '/checkout' } }), 1800);
+      return 'Your session has expired. Please sign in again to continue.';
+    }
+
+    // Network / connectivity issues
+    if (
+      err.isNetworkError ||
+      lower.includes('unable to connect') ||
+      lower.includes('failed to fetch') ||
+      lower.includes('networkerror')
+    ) {
+      return 'Unable to connect to the payment server. Please verify your internet connection or try another payment method.';
+    }
+
+    // Tabby-specific decline & spending limit handling
+    if (method === 'tabby') {
+      if (
+        rejectionReason === 'order_amount_too_high' ||
+        lower.includes('order_amount_too_high') ||
+        lower.includes('above your current spending limit') ||
+        lower.includes('amount too high')
+      ) {
+        return 'This purchase is above your current spending limit with Tabby, try a smaller cart or use another payment method.';
+      }
+
+      if (
+        rejectionReason === 'order_amount_too_low' ||
+        lower.includes('order_amount_too_low') ||
+        lower.includes('below the minimum amount required') ||
+        lower.includes('amount too low')
+      ) {
+        return 'The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method.';
+      }
+
+      if (
+        rejectionReason === 'not_available' ||
+        rejectionReason === 'rejected' ||
+        lower.includes('unable to approve this purchase') ||
+        lower.includes('not available') ||
+        lower.includes('rejected')
+      ) {
+        return 'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
+      }
+    }
+
+    // Tamara-specific decline handling
+    if (method === 'tamara') {
+      if (
+        rejectionReason === 'order_amount_too_high' ||
+        lower.includes('above your spending limit')
+      ) {
+        return 'This purchase is above your spending limit with Tamara. Please try a smaller cart or another payment method.';
+      }
+
+      if (
+        rejectionReason === 'not_available' ||
+        lower.includes('unable to approve') ||
+        lower.includes('rejected')
+      ) {
+        return 'Sorry, Tamara is unable to approve this purchase. Please use an alternative payment method.';
+      }
+    }
+
+    // Return the clean message from the error if available
+    return msg || 'An error occurred during checkout. Please try again or select another payment method.';
+  };
+
   const placeOrder = async () => {
+    if (placing) return;
     const auth = getAuth();
     if (!auth.currentUser) {
       setError('Please sign in to place your order.');
@@ -313,115 +421,80 @@ export default function CheckoutPage() {
 
       if (paymentMethod === 'tamara') {
         // Tamara Checkout flow
-        const session = await tamaraApi.createCheckoutSession({
-          items,
-          shippingAddress: address,
-        });
+        try {
+          const session = await tamaraApi.createCheckoutSession({
+            items,
+            shippingAddress: address,
+          });
 
-        const redirectUrl = session.checkout_url || session.checkoutUrl;
-        if (redirectUrl) {
-          window.location.href = redirectUrl;
+          const redirectUrl = session?.checkout_url || session?.checkoutUrl;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+            return;
+          } else {
+            const errorMsg = session?.message || 'Tamara did not return a valid checkout URL. Please try another payment method.';
+            setError(errorMsg);
+            setPlacing(false);
+            return;
+          }
+        } catch (tamaraError) {
+          const errorMsg = getErrorMessage(tamaraError, 'tamara');
+          console.warn('[Checkout] Tamara checkout notice:', errorMsg);
+          setError(errorMsg);
+          setPlacing(false);
           return;
-        } else {
-          throw new Error('Tamara did not return a valid checkout URL.');
         }
       } else if (paymentMethod === 'tabby') {
-        // Tabby Checkout flow
-        const session = await tabbyApi.createCheckoutSession({
-          items,
-          shippingAddress: address,
-        });
+        // Tabby Checkout flow: Dedicated try/catch block
+        // Gracefully captures any error (e.g. 400 rejection), displays in UI banner, and avoids red console crashes
+        try {
+          const session = await tabbyApi.createCheckoutSession({
+            items,
+            shippingAddress: address,
+          });
 
-        const redirectUrl = session.checkout_url || session.checkoutUrl;
-        if (redirectUrl) {
-          window.location.href = redirectUrl;
+          const redirectUrl = session?.checkout_url || session?.checkoutUrl;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+            return;
+          } else {
+            const errorMsg = session?.message || 'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
+            setError(errorMsg);
+            setPlacing(false);
+            return;
+          }
+        } catch (tabbyError) {
+          // Gracefully capture the error message and display it in the checkout UI alert/banner
+          // Do NOT re-throw the error or allow it to bubble up as an Uncaught (in promise) error in the browser console.
+          const errorMsg = getErrorMessage(tabbyError, 'tabby');
+          console.warn('[Checkout] Tabby checkout notice:', errorMsg);
+          setError(errorMsg);
+          setPlacing(false);
           return;
-        } else {
-          throw new Error('Tabby did not return a valid checkout URL.');
         }
       } else {
         // Standard Cash on Delivery / Direct Order
-        const order = await orderApi.create({
-          items,
-          shippingAddress: address,
-          paymentMethod: 'Cash on Delivery',
-        });
-        setOrderId(order.id);
-        clearCart();
-        setStep(5);
-      }
-    } catch (requestError) {
-      console.error('Checkout error:', requestError);
-      let errorMsg = requestError.message || 'An error occurred during checkout.';
-      const rejectionReason = (
-        requestError.rejection_reason ||
-        requestError.code ||
-        ''
-      ).toLowerCase();
-      const lower = errorMsg.toLowerCase();
-
-      // 401 – session expired: show message and redirect to login
-      const is401 =
-        requestError.status === 401 ||
-        lower.includes('invalid or expired authentication token') ||
-        lower.includes('please sign in');
-
-      if (is401) {
-        setError('Your session has expired. Please sign in again to continue.');
-        setPlacing(false);
-        // Give the user a moment to read the message before redirecting
-        setTimeout(() => navigate('/login', { state: { from: '/checkout' } }), 1800);
-        return;
-      }
-
-      if (
-        requestError.isNetworkError ||
-        lower.includes('unable to connect') ||
-        lower.includes('failed to fetch') ||
-        lower.includes('networkerror')
-      ) {
-        errorMsg =
-          requestError.message ||
-          'Unable to connect to the checkout server. Please verify your connection or try another payment method.';
-      } else if (paymentMethod === 'tabby') {
-        // Only show Tabby-specific decline copy for genuine Tabby API rejections.
-        // Do NOT show it for store-level errors (401, 429, 500, etc.).
-        const isTabbyDecline =
-          rejectionReason === 'order_amount_too_high' ||
-          rejectionReason === 'order_amount_too_low' ||
-          rejectionReason === 'not_available' ||
-          rejectionReason === 'rejected' ||
-          lower.includes('order_amount_too_high') ||
-          lower.includes('order_amount_too_low') ||
-          lower.includes('above your current spending limit') ||
-          lower.includes('amount too high') ||
-          lower.includes('below the minimum amount required') ||
-          lower.includes('amount too low');
-
-        if (
-          rejectionReason === 'order_amount_too_high' ||
-          lower.includes('order_amount_too_high') ||
-          lower.includes('above your current spending limit') ||
-          lower.includes('amount too high')
-        ) {
-          errorMsg =
-            'This purchase is above your current spending limit with Tabby, try a smaller cart or use another payment method.';
-        } else if (
-          rejectionReason === 'order_amount_too_low' ||
-          lower.includes('order_amount_too_low') ||
-          lower.includes('below the minimum amount required') ||
-          lower.includes('amount too low')
-        ) {
-          errorMsg =
-            'The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method.';
-        } else if (isTabbyDecline) {
-          // Only for genuine Tabby-API declines (not_available / rejected)
-          errorMsg =
-            'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
+        try {
+          const order = await orderApi.create({
+            items,
+            shippingAddress: address,
+            paymentMethod: 'Cash on Delivery',
+          });
+          setOrderId(order.id);
+          clearCart();
+          setStep(5);
+        } catch (codError) {
+          const errorMsg = getErrorMessage(codError, 'cod');
+          console.warn('[Checkout] Order creation notice:', errorMsg);
+          setError(errorMsg);
+          setPlacing(false);
+          return;
         }
-        // For 429 / 500 / other store errors, fall through and show the raw server message.
       }
-      setError(errorMsg);
+    } catch (unexpectedError) {
+      // Top-level safeguard against uncaught promise rejections
+      console.warn('[Checkout] Top-level checkout notice:', unexpectedError?.message || unexpectedError);
+      setError(unexpectedError?.message || 'An unexpected error occurred during checkout.');
       setPlacing(false);
     }
   };
@@ -494,7 +567,29 @@ export default function CheckoutPage() {
             ))}
           </div>
 
-          {error && <div className="form-state error">{error}</div>}
+          {error && (
+            <div
+              className="form-state error"
+              role="alert"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '14px 18px',
+                borderRadius: 8,
+                border: '1px solid #e2a89f',
+                background: '#fef2f0',
+                color: '#8f2b20',
+                fontSize: 13,
+                fontWeight: 600,
+                marginBottom: 24,
+                boxShadow: '0 2px 8px rgba(143, 43, 32, 0.08)',
+              }}
+            >
+              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>⚠</span>
+              <span style={{ flex: 1, lineHeight: 1.5 }}>{error}</span>
+            </div>
+          )}
 
           {step === 1 && (
             <AddressStep address={address} onChange={updateAddress} next={() => setStep(2)} />
