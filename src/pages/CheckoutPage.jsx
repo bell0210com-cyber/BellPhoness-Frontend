@@ -190,15 +190,7 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
               <strong style={{ fontSize: 14, color: '#111' }}>
                 Pay later with Tabby
               </strong>
-              <img
-                src="/assets/tabby-badge.svg"
-                alt="Tabby"
-                style={{
-                  width: 80,
-                  height: 'auto',
-                  display: 'block',
-                }}
-              />
+              <TabbyLogo width={76} height={28} />
             </div>
           </label>
         </div>
