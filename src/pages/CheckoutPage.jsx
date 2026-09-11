@@ -334,18 +334,16 @@ export default function CheckoutPage() {
 
         let redirectUrl = session.checkout_url || session.checkoutUrl;
         if (redirectUrl) {
-          // Frontend safeguard: Ensure Tabby redirect URL uses Public Key (pk_...), never Secret Key (sk_...)
-          const pubKey = import.meta.env.VITE_TABBY_PUBLIC_KEY || 'pk_test_b8e21976-59a6-4b82-9ae4-0b7305988e0b';
+          // Frontend safeguard: Strictly enforce the correct Public Key on Tabby's redirect URL
+          const pubKey = 'pk_test_b8e21976-59a6-4b82-9ae4-0b7305988e0b';
           try {
             const parsed = new URL(redirectUrl);
-            const currentKey = parsed.searchParams.get('apiKey');
-            if (currentKey && currentKey.startsWith('sk_')) {
-              parsed.searchParams.set('apiKey', pubKey);
-              redirectUrl = parsed.toString();
-            }
+            parsed.searchParams.set('apiKey', pubKey);
+            redirectUrl = parsed.toString();
           } catch {
-            // ignore URL parse error
+            redirectUrl = redirectUrl.replace(/([?&])apiKey=[^&]+/, `$1apiKey=${pubKey}`);
           }
+          redirectUrl = redirectUrl.replaceAll('pk_test_01a03e76-a3d2-02e4-385f-b38bd6ca4d3a', pubKey);
           window.location.href = redirectUrl;
           return;
         } else {
