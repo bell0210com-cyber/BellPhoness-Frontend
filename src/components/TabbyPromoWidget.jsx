@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const TABBY_PUBLIC_KEY = import.meta.env.VITE_TABBY_PUBLIC_KEY || 'pk_test_01a03e76-a3d2-02e4-385f-b38bd6ca4d3a';
+const TABBY_PUBLIC_KEY = import.meta.env.VITE_TABBY_PUBLIC_KEY || 'pk_test_b8e21976-59a6-4b82-9ae4-0b7305988e0b';
 const TABBY_MERCHANT_CODE = import.meta.env.VITE_TABBY_MERCHANT_CODE || 'ALJA';
 
 export default function TabbyPromoWidget({ 
