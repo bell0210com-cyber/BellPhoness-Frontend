@@ -10,7 +10,7 @@ async function authHeader() {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error('Please sign in to complete checkout.');
-  const token = await user.getIdToken();
+  const token = await user.getIdToken(true);
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 }
 
