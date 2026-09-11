@@ -10,7 +10,6 @@ import { tamaraApi } from '../services/tamaraApi';
 import { tabbyApi } from '../services/tabbyApi';
 import TamaraWidget from '../components/TamaraWidget';
 import TabbyPromoWidget from '../components/TabbyPromoWidget';
-import TabbyCard from '../components/TabbyCard';
 import TabbyLogo from '../components/TabbyLogo';
 
 const formatPrice = (value) =>
@@ -192,12 +191,8 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
                 Pay later with Tabby
               </strong>
               <img
-                src="/assets/tabby-badge.png"
+                src="/assets/tabby-badge.svg"
                 alt="Tabby"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = '/assets/tabby-badge.svg';
-                }}
                 style={{
                   width: 80,
                   height: 'auto',
@@ -206,11 +201,6 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
               />
             </div>
           </label>
-
-          {/* Official TabbyCard Checkout Snippet */}
-          {paymentMethod === 'tabby' && (
-            <TabbyCard price={price} currency="AED" />
-          )}
         </div>
 
         {/* Cash on Delivery Option */}
@@ -370,6 +360,20 @@ export default function CheckoutPage() {
       ).toLowerCase();
       const lower = errorMsg.toLowerCase();
 
+      // 401 – session expired: show message and redirect to login
+      const is401 =
+        requestError.status === 401 ||
+        lower.includes('invalid or expired authentication token') ||
+        lower.includes('please sign in');
+
+      if (is401) {
+        setError('Your session has expired. Please sign in again to continue.');
+        setPlacing(false);
+        // Give the user a moment to read the message before redirecting
+        setTimeout(() => navigate('/login', { state: { from: '/checkout' } }), 1800);
+        return;
+      }
+
       if (
         requestError.isNetworkError ||
         lower.includes('unable to connect') ||
@@ -380,6 +384,20 @@ export default function CheckoutPage() {
           requestError.message ||
           'Unable to connect to the checkout server. Please verify your connection or try another payment method.';
       } else if (paymentMethod === 'tabby') {
+        // Only show Tabby-specific decline copy for genuine Tabby API rejections.
+        // Do NOT show it for store-level errors (401, 429, 500, etc.).
+        const isTabbyDecline =
+          rejectionReason === 'order_amount_too_high' ||
+          rejectionReason === 'order_amount_too_low' ||
+          rejectionReason === 'not_available' ||
+          rejectionReason === 'rejected' ||
+          lower.includes('order_amount_too_high') ||
+          lower.includes('order_amount_too_low') ||
+          lower.includes('above your current spending limit') ||
+          lower.includes('amount too high') ||
+          lower.includes('below the minimum amount required') ||
+          lower.includes('amount too low');
+
         if (
           rejectionReason === 'order_amount_too_high' ||
           lower.includes('order_amount_too_high') ||
@@ -396,11 +414,12 @@ export default function CheckoutPage() {
         ) {
           errorMsg =
             'The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method.';
-        } else {
-          // not_available or any other Tabby rejection
+        } else if (isTabbyDecline) {
+          // Only for genuine Tabby-API declines (not_available / rejected)
           errorMsg =
             'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
         }
+        // For 429 / 500 / other store errors, fall through and show the raw server message.
       }
       setError(errorMsg);
       setPlacing(false);

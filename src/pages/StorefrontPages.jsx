@@ -48,6 +48,7 @@ export function AuthPage({ type }) {
   const [state, setState] = useState({
     kind: '',
     message: '',
+    isNetworkError: false,
   });
 
   const update = (event) => {
@@ -109,6 +110,7 @@ export function AuthPage({ type }) {
     setState({
       kind: 'loading',
       message: '',
+      isNetworkError: false,
     });
 
     try {
@@ -122,6 +124,7 @@ export function AuthPage({ type }) {
         setState({
           kind: 'success',
           message: 'Login successful. Redirecting...',
+          isNetworkError: false,
         });
 
         setTimeout(() => {
@@ -142,6 +145,7 @@ export function AuthPage({ type }) {
         setState({
           kind: 'success',
           message: 'Account created! Please check your email to verify your account before logging in.',
+          isNetworkError: false,
         });
 
         setTimeout(() => {
@@ -157,13 +161,21 @@ export function AuthPage({ type }) {
         kind: 'success',
         message:
           'If an account exists, password reset instructions have been requested.',
+        isNetworkError: false,
       });
     } catch (error) {
       console.error('Authentication error:', error);
 
       let message = 'Something went wrong. Please try again.';
+      let isNetworkError = false;
 
       switch (error?.code) {
+        case 'auth/network-request-failed':
+          message =
+            'Network connection failure. Please check your internet connection or disable ad-blockers/VPN, and try again.';
+          isNetworkError = true;
+          break;
+
         case 'auth/email-unverified':
           message = 'Please verify your email address to log in. Check your inbox for the verification link.';
           break;
@@ -201,12 +213,20 @@ export function AuthPage({ type }) {
           break;
 
         default:
-          message = error?.message || message;
+          // isNetworkError flag set by withNetworkRetry in authService
+          if (error?.isNetworkError) {
+            message =
+              'Network connection failure. Please check your internet connection or disable ad-blockers/VPN, and try again.';
+            isNetworkError = true;
+          } else {
+            message = error?.message || message;
+          }
       }
 
       setState({
         kind: 'error',
         message,
+        isNetworkError,
       });
     }
   };
@@ -215,6 +235,7 @@ export function AuthPage({ type }) {
     setState({
       kind: 'loading',
       message: '',
+      isNetworkError: false,
     });
 
     try {
@@ -223,6 +244,7 @@ export function AuthPage({ type }) {
       setState({
         kind: 'success',
         message: 'Google login successful. Redirecting...',
+        isNetworkError: false,
       });
 
       setTimeout(() => {
@@ -232,8 +254,15 @@ export function AuthPage({ type }) {
       console.error('Google authentication error:', error);
 
       let message = 'Google sign-in failed. Please try again.';
+      let isNetworkError = false;
 
       switch (error?.code) {
+        case 'auth/network-request-failed':
+          message =
+            'Network connection failure. Please check your internet connection or disable ad-blockers/VPN, and try again.';
+          isNetworkError = true;
+          break;
+
         case 'auth/popup-closed-by-user':
           message = 'Google sign-in was cancelled.';
           break;
@@ -254,12 +283,19 @@ export function AuthPage({ type }) {
           break;
 
         default:
-          message = error?.message || message;
+          if (error?.isNetworkError) {
+            message =
+              'Network connection failure. Please check your internet connection or disable ad-blockers/VPN, and try again.';
+            isNetworkError = true;
+          } else {
+            message = error?.message || message;
+          }
       }
 
       setState({
         kind: 'error',
         message,
+        isNetworkError,
       });
     }
   };
@@ -303,6 +339,29 @@ export function AuthPage({ type }) {
               }
             >
               {state.message}
+              {state.isNetworkError && (
+                <button
+                  type="button"
+                  className="retry-inline-button"
+                  style={{
+                    display: 'block',
+                    marginTop: 10,
+                    padding: '6px 16px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#fff',
+                    background: '#be9a5d',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    setState({ kind: '', message: '', isNetworkError: false });
+                  }}
+                >
+                  ↺ Retry
+                </button>
+              )}
             </div>
           )}
 

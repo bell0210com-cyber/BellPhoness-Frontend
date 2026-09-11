@@ -39,6 +39,42 @@ function requireFirebase() {
   }
 }
 
+/**
+ * Wraps a Firebase auth call with one automatic retry on auth/network-request-failed.
+ * Waits 1 500 ms before the retry to give transient network drops time to recover.
+ * Logs the failure details in development to aid debugging.
+ *
+ * @param {() => Promise<any>} fn - The async auth operation to run.
+ * @returns {Promise<any>}
+ */
+async function withNetworkRetry(fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err?.code === 'auth/network-request-failed') {
+      if (import.meta.env.DEV) {
+        console.warn('[FirebaseAuth] Network failure (attempt 1):', err.message);
+      }
+      // Wait 1.5 s then retry once
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      try {
+        if (import.meta.env.DEV) {
+          console.info('[FirebaseAuth] Retrying after network failure...');
+        }
+        return await fn();
+      } catch (retryErr) {
+        if (import.meta.env.DEV) {
+          console.error('[FirebaseAuth] Network failure (attempt 2 — final):', retryErr.message);
+        }
+        // Re-throw with a flag so callers can show a network-specific UI message
+        retryErr.isNetworkError = true;
+        throw retryErr;
+      }
+    }
+    throw err;
+  }
+}
+
 export async function signInWithEmail(
   email,
   password,
@@ -46,17 +82,14 @@ export async function signInWithEmail(
 ) {
   requireFirebase();
 
-  await setPersistence(
-    auth,
-    remember
-      ? browserLocalPersistence
-      : browserSessionPersistence
-  );
+  // Persistence is set globally in firebaseClient.js (browserLocalPersistence).
+  // We still honour the `remember` flag by switching to sessionPersistence when false.
+  if (!remember) {
+    await setPersistence(auth, browserSessionPersistence);
+  }
 
-  const result = await signInWithEmailAndPassword(
-    auth,
-    email.trim(),
-    password
+  const result = await withNetworkRetry(() =>
+    signInWithEmailAndPassword(auth, email.trim(), password)
   );
 
   if (!result.user.emailVerified) {
@@ -77,10 +110,8 @@ export async function registerWithEmail({
 }) {
   requireFirebase();
 
-  const result = await createUserWithEmailAndPassword(
-    auth,
-    email.trim(),
-    password
+  const result = await withNetworkRetry(() =>
+    createUserWithEmailAndPassword(auth, email.trim(), password)
   );
 
   const user = result.user;
@@ -146,9 +177,8 @@ export async function signInWithGoogle() {
     prompt: 'select_account',
   });
 
-  const result = await signInWithPopup(
-    auth,
-    provider
+  const result = await withNetworkRetry(() =>
+    signInWithPopup(auth, provider)
   );
 
   const user = result.user;
