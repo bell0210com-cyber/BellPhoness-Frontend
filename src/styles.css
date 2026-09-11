@@ -3714,6 +3714,29 @@
   }
 }
 
+/* Tabby Promo Widget & Currency Glitch Fixes */
+[id*="TabbyPromo"],
+[id*="tabby"],
+.tabby-promo-container,
+.tabby-widget-container {
+  font-family: inherit;
+}
+
+[id*="TabbyPromo"] [class*="Currency_aed"],
+[id*="tabby"] [class*="Currency_aed"],
+.tabby-promo-container [class*="Currency_aed"],
+[class*="Currency__Currency_aed"] {
+  font-feature-settings: normal !important;
+  font-family: inherit !important;
+  display: inline !important;
+}
+
+.tabby-promo-baseline strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+
 
 
 

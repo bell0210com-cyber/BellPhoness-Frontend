@@ -20,7 +20,7 @@ export default function TabbyWidget({ amount = 0, inline = true, showDisclaimer 
       <div className={`tabby-promo-badge ${inline ? 'tabby-inline' : ''}`} role="region" aria-label="Tabby Payment Options">
         <div className="tabby-badge-content" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span className="tabby-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            or 4 interest-free payments of <strong>{formatMoney(instalmentAmount)}</strong> with
+            As low as <strong>AED {instalmentAmount.toFixed(2)}/month</strong> or 4 interest-free payments.
           </span>
           <TabbyLogo width={68} height={24} />
           <button

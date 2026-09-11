@@ -63,8 +63,8 @@ export default function BNPLBadges({ price = 0 }) {
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
             <TabbyLogo width={68} height={24} />
           </div>
-          <span style={subtitleStyle}>4 interest-free payments</span>
-          <span style={amountStyle}>AED {installment} / mo</span>
+          <span style={subtitleStyle}>or 4 interest-free payments.</span>
+          <span style={amountStyle}>As low as AED {installment}/month</span>
         </div>
       </div>
 
