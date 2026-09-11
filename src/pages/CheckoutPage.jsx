@@ -332,8 +332,20 @@ export default function CheckoutPage() {
           shippingAddress: address,
         });
 
-        const redirectUrl = session.checkout_url || session.checkoutUrl;
+        let redirectUrl = session.checkout_url || session.checkoutUrl;
         if (redirectUrl) {
+          // Frontend safeguard: Ensure Tabby redirect URL uses Public Key (pk_...), never Secret Key (sk_...)
+          const pubKey = import.meta.env.VITE_TABBY_PUBLIC_KEY || 'pk_test_b8e21976-59a6-4b82-9ae4-0b7305988e0b';
+          try {
+            const parsed = new URL(redirectUrl);
+            const currentKey = parsed.searchParams.get('apiKey');
+            if (currentKey && currentKey.startsWith('sk_')) {
+              parsed.searchParams.set('apiKey', pubKey);
+              redirectUrl = parsed.toString();
+            }
+          } catch {
+            // ignore URL parse error
+          }
           window.location.href = redirectUrl;
           return;
         } else {
