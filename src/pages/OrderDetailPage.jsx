@@ -58,11 +58,16 @@ export default function OrderDetailPage() {
         <h2>Order information</h2>
 
         <div className="status-list">
-          {statuses.map((s) => (
-            <span key={s} className={order.status === s ? 'active' : ''}>
-              {s}
-            </span>
-          ))}
+          {statuses.map((s) => {
+            const os = (order.status || '').toLowerCase();
+            const ss = s.toLowerCase();
+            const isActive = os === ss || ((os === 'paid' || os === 'confirmed') && (ss === 'confirmed' || ss === 'paid'));
+            return (
+              <span key={s} className={isActive ? 'active' : ''}>
+                {s}
+              </span>
+            );
+          })}
         </div>
 
         <div className="spec-table" style={{ marginTop: 30 }}>

@@ -336,8 +336,8 @@ export function AdminDashboard() {
             const data = doc.data();
             const status = (data.status || '').toLowerCase();
             const payStatus = (data.paymentStatus || '').toLowerCase();
-            if (data.status === 'Pending') pendingO++;
-            if (status !== 'cancelled' && payStatus !== 'failed') {
+            if (status === 'pending') pendingO++;
+            if (status !== 'cancelled' && status !== 'canceled' && payStatus !== 'failed') {
               rev += Number(data.total) || 0;
             }
           });
@@ -1190,7 +1190,20 @@ export function AdminSettingsPage() {
    ADMIN ORDERS  (with status dropdown + View link)
 ========================================================= */
 
-const ORDER_STATUSES = ['Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
+const ORDER_STATUSES = ['Pending', 'Paid', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
+
+const normalizeOrderStatus = (status) => {
+  if (!status) return 'Pending';
+  const lower = String(status).trim().toLowerCase();
+  if (lower === 'paid') return 'Paid';
+  if (lower === 'pending') return 'Pending';
+  if (lower === 'confirmed') return 'Confirmed';
+  if (lower === 'packed') return 'Packed';
+  if (lower === 'shipped') return 'Shipped';
+  if (lower === 'delivered') return 'Delivered';
+  if (lower === 'cancelled' || lower === 'canceled') return 'Cancelled';
+  return status;
+};
 
 const formatOrderDate = (value) => {
   if (!value) return '—';
@@ -1266,7 +1279,7 @@ export function AdminOrdersPage() {
               <span>AED {order.total}</span>
               <span>
                 <select
-                  value={order.status}
+                  value={normalizeOrderStatus(order.status)}
                   disabled={updatingId === order.id}
                   onChange={(e) => changeStatus(order.id, e.target.value)}
                 >
@@ -1365,17 +1378,15 @@ export function AdminOrderDetailPage() {
                 <div>
                   <span>Status</span>
                   <select
-                    value={order.status}
+                    value={normalizeOrderStatus(order.status)}
                     disabled={updating}
                     onChange={(e) => changeStatus(e.target.value)}
                   >
-                    {['Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'].map(
-                      (s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      )
-                    )}
+                    {ORDER_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
