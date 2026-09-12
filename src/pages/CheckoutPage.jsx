@@ -13,11 +13,7 @@ import TabbyPromoWidget from '../components/TabbyPromoWidget';
 import TabbyLogo from '../components/TabbyLogo';
 
 const formatPrice = (value) =>
-  new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency: 'AED',
-    maximumFractionDigits: 0,
-  }).format(value);
+  `AED ${Math.round(Number(value) || 0).toLocaleString('en-US')}`;
 
 const FREE_SHIPPING_THRESHOLD = 2000;
 const STANDARD_SHIPPING_FEE = 35;

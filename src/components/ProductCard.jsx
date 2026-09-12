@@ -3,7 +3,7 @@ import { productPrice, productVariants } from '../data/products';
 import { useStore } from '../context/StoreContext';
 import { optimizeCloudinaryUrl } from '../utils/imageOptimizer';
 
-const money = (value) => new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', maximumFractionDigits: 0 }).format(value);
+const money = (value) => `AED ${Math.round(Number(value) || 0).toLocaleString('en-US')}`;
 export { money };
 export default function ProductCard({ product }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();

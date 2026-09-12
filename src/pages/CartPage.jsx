@@ -7,11 +7,7 @@ import TamaraWidget from '../components/TamaraWidget';
 import TabbyPromoWidget from '../components/TabbyPromoWidget';
 
 const formatPrice = (value) =>
-  new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency: 'AED',
-    maximumFractionDigits: 0,
-  }).format(value);
+  `AED ${Math.round(Number(value) || 0).toLocaleString('en-US')}`;
 
 function OrderSummary({ items, onCheckout, onClear }) {
   const subtotal = items.reduce((sum, item) => sum + productPrice(item) * item.quantity, 0);

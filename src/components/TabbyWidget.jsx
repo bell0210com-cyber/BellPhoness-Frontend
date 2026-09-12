@@ -2,11 +2,7 @@ import { useState } from 'react';
 import TabbyLogo from './TabbyLogo';
 
 const formatMoney = (value) =>
-  new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency: 'AED',
-    maximumFractionDigits: 0,
-  }).format(value);
+  `AED ${Math.round(Number(value) || 0).toLocaleString('en-US')}`;
 
 export default function TabbyWidget({ amount = 0, inline = true, showDisclaimer = true }) {
   const [showModal, setShowModal] = useState(false);

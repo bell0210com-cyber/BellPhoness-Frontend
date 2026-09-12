@@ -37,12 +37,21 @@ export default function TabbyPromoWidget({
 
         let changed = false;
 
-        // Currency Symbol Glitch: Replace any distorted/encoded currency symbol
-        // Covers: Ð (U+00D0), ৳ (U+09F3 Bengali Currency Sign), Arabic د.إ, and any
-        // other non-ASCII single-char that Tabby's script may inject for AED.
-        const CURRENCY_PATTERN = /[Ð\u00D0\u09F3]|د\.إ/g;
-        if (CURRENCY_PATTERN.test(val)) {
-          val = val.replace(/[Ð\u00D0\u09F3]|د\.إ/g, 'AED ');
+        // Currency Symbol Glitch: Replace ANY distorted/encoded currency symbol, unicode glyph, or placeholder
+        // Covers:
+        // 1. All Unicode currency symbols: \p{Sc} (e.g. ৳, $, €, £, ¥, ₹, ¤, etc.)
+        // 2. Latin D variations used as Dirham placeholders: Ð (U+00D0), Đ (U+0110), đ (U+0111)
+        // 3. Arabic Dirham symbol: د.إ
+        // 4. Any non-ASCII symbol/character adjacent to digits (e.g. unknown glyph before price)
+        const ROBUST_CURRENCY_REGEX = /[Ð\u00D0\u0110\u0111\u09F3\u00A4\p{Sc}]|د\.إ/gu;
+        if (ROBUST_CURRENCY_REGEX.test(val)) {
+          val = val.replace(ROBUST_CURRENCY_REGEX, 'AED ');
+          changed = true;
+        }
+
+        const NON_ASCII_BEFORE_NUM = /([^\x00-\x7F\s]|[^a-zA-Z0-9\s.,/()'\-])(?=\s*\d+[.,]\d{2})/g;
+        if (NON_ASCII_BEFORE_NUM.test(val)) {
+          val = val.replace(NON_ASCII_BEFORE_NUM, 'AED ');
           changed = true;
         }
 
@@ -56,7 +65,7 @@ export default function TabbyPromoWidget({
         }
 
         // Clean up any double spaces around AED
-        if (val.includes('AED  ')) {
+        if (/AED\s+/g.test(val)) {
           val = val.replace(/AED\s+/g, 'AED ');
           changed = true;
         }
@@ -66,13 +75,14 @@ export default function TabbyPromoWidget({
         }
       }
 
-      // 2. Specific fix for Tabby's Currency elements (<span class="Currency__Currency_aed...">) 
+      // 2. Specific fix for Tabby's Currency elements (<span class="Currency__Currency_aed...">)
+      // Unconditionally force 'AED ' for ANY character/glyph Tabby injects into its currency container
       const currencyEls = container.querySelectorAll('[class*="Currency"], [class*="currency"]');
       currencyEls.forEach((el) => {
         el.style.fontFeatureSettings = 'normal';
         el.style.fontFamily = 'inherit';
-        const txt = el.textContent || '';
-        if (/[Ð\u00D0\u09F3]|د\.إ/.test(txt)) {
+        const txt = (el.textContent || '').trim();
+        if (txt !== 'AED') {
           el.textContent = 'AED ';
         }
       });

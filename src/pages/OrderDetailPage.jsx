@@ -7,11 +7,7 @@ import { db } from '../services/firebaseClient';
 import ReviewForm from '../components/ReviewForm';
 
 const formatPrice = (value) =>
-  new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency: 'AED',
-    maximumFractionDigits: 0,
-  }).format(value);
+  `AED ${Math.round(Number(value) || 0).toLocaleString('en-US')}`;
 
 const statuses = ['Pending', 'Confirmed', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
 

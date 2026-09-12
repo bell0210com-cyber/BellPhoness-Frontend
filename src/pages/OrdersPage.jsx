@@ -7,11 +7,7 @@ import { db } from '../services/firebaseClient';
 import { useAuth } from '../context/AuthContext';
 
 const formatPrice = (value) =>
-  new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency: 'AED',
-    maximumFractionDigits: 0,
-  }).format(value);
+  `AED ${Math.round(Number(value) || 0).toLocaleString('en-US')}`;
 
 export default function OrdersPage() {
   const { user } = useAuth();

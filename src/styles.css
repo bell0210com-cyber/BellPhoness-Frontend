@@ -3722,13 +3722,22 @@
   font-family: inherit;
 }
 
-[id*="TabbyPromo"] [class*="Currency_aed"],
-[id*="tabby"] [class*="Currency_aed"],
-.tabby-promo-container [class*="Currency_aed"],
-[class*="Currency__Currency_aed"] {
+[id*="TabbyPromo"] [class*="Currency"],
+[id*="tabby"] [class*="Currency"],
+.tabby-promo-container [class*="Currency"],
+[class*="Currency__Currency"] {
   font-feature-settings: normal !important;
   font-family: inherit !important;
+  font-variant: normal !important;
   display: inline !important;
+  letter-spacing: normal !important;
+}
+
+[id*="TabbyPromo"] [class*="Currency"]::before,
+[id*="TabbyPromo"] [class*="Currency"]::after,
+.tabby-promo-container [class*="Currency"]::before,
+.tabby-promo-container [class*="Currency"]::after {
+  content: none !important;
 }
 
 .tabby-promo-baseline strong {
