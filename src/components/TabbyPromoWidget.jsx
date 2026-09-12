@@ -148,7 +148,7 @@ export default function TabbyPromoWidget({
     return () => {
       if (observer) observer.disconnect();
     };
-  }, [price, currency, source, containerId, numericPrice]);
+  }, [numericPrice, currency, source, containerId]);
 
   if (!price || numericPrice <= 0) return null;
 
