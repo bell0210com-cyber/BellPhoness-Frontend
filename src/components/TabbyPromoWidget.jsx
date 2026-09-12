@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TabbyLogo from './TabbyLogo';
 
 const TABBY_PUBLIC_KEY = import.meta.env.VITE_TABBY_PUBLIC_KEY || 'pk_test_b8e21976-59a6-4b82-9ae4-0b7305988e0b';
@@ -11,17 +11,25 @@ export default function TabbyPromoWidget({
   containerId = 'TabbyPromo' 
 }) {
   const containerRef = useRef(null);
+  const [tabbyScriptRendered, setTabbyScriptRendered] = useState(false);
   const numericPrice = Number(price) || 0;
   const installmentAmount = numericPrice > 0 ? (numericPrice / 4).toFixed(2) : '0.00';
 
   useEffect(() => {
     if (numericPrice <= 0) return;
 
-    // Sanitizer function to fix currency symbol glitch (Ð -> AED) and text formatting
+    // Sanitizer function to fix currency symbol glitch (Ð / ৳ / unicode -> AED) and text formatting
     // Strictly enforces: "As low as AED {amount}/month or 4 interest-free payments."
     const sanitizeTabbyDOM = () => {
       const container = document.getElementById(containerId) || containerRef.current;
       if (!container) return;
+
+      // Detect if Tabby script actually populated meaningful DOM content
+      const hasContent = container.querySelector('[class*="Currency"], [class*="currency"], [class*="snippet"], [class*="Snippet"]') ||
+        ((container.textContent || '').trim().length > 10 && (container.textContent || '').includes('interest'));
+      if (hasContent) {
+        setTabbyScriptRendered(true);
+      }
 
       // 1. Process all text nodes inside container
       const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
@@ -146,8 +154,15 @@ export default function TabbyPromoWidget({
 
   return (
     <div className="tabby-promo-container" style={{ margin: 0 }} ref={containerRef}>
-      {/* Official Tabby on-site messaging container with verified baseline markup */}
-      <div id={containerId} className="tabby-promo-mount">
+      {/* Official Tabby on-site messaging container */}
+      <div
+        id={containerId}
+        className="tabby-promo-mount"
+        style={{ display: tabbyScriptRendered ? 'block' : 'none' }}
+      />
+
+      {/* Verified baseline markup: ensures seamless display while or if script does not populate */}
+      {!tabbyScriptRendered && (
         <div
           className="tabby-promo-baseline"
           style={{
@@ -171,7 +186,7 @@ export default function TabbyPromoWidget({
             <TabbyLogo width={64} height={22} />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
