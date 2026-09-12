@@ -319,6 +319,20 @@ export default function CheckoutPage() {
     reason: '',
   });
 
+  const updateAddress = (key, value) => setAddress((current) => ({ ...current, [key]: value }));
+
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethod(method);
+    setError('');
+  };
+
+  const dubaiOrder = isDubai(address.emirate);
+
+  const subtotal = cart.reduce((sum, item) => sum + productPrice(item) * item.quantity, 0);
+  const hasEmirate = !!address.emirate;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
+  const total = subtotal + (hasEmirate ? shipping : 0);
+
   // Background pre-scoring check: fires automatically as soon as customer enters phone/email
   useEffect(() => {
     const rawPhone = (address.phone || '').replace(/[^0-9]/g, '');
@@ -367,20 +381,6 @@ export default function CheckoutPage() {
       clearTimeout(timer);
     };
   }, [address.phone, address.email, total]);
-
-  const updateAddress = (key, value) => setAddress((current) => ({ ...current, [key]: value }));
-
-  const handlePaymentMethodChange = (method) => {
-    setPaymentMethod(method);
-    setError('');
-  };
-
-  const dubaiOrder = isDubai(address.emirate);
-
-  const subtotal = cart.reduce((sum, item) => sum + productPrice(item) * item.quantity, 0);
-  const hasEmirate = !!address.emirate;
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
-  const total = subtotal + (hasEmirate ? shipping : 0);
 
   const getErrorMessage = (err, method) => {
     if (!err) return 'An unexpected error occurred during checkout.';
