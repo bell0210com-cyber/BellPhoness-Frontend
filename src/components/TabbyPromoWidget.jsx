@@ -37,12 +37,12 @@ export default function TabbyPromoWidget({
 
         let changed = false;
 
-        // Currency Symbol Glitch: Replace any distorted/encoded currency symbol (like Ð or \u00D0) with AED
-        if (val.trim() === 'Ð' || val.trim() === '\u00D0') {
-          val = 'AED ';
-          changed = true;
-        } else if (val.includes('Ð') || val.includes('\u00D0') || val.includes('د.إ')) {
-          val = val.replace(/[Ð\u00D0]/g, 'AED ').replace(/د\.إ/g, 'AED ');
+        // Currency Symbol Glitch: Replace any distorted/encoded currency symbol
+        // Covers: Ð (U+00D0), ৳ (U+09F3 Bengali Currency Sign), Arabic د.إ, and any
+        // other non-ASCII single-char that Tabby's script may inject for AED.
+        const CURRENCY_PATTERN = /[Ð\u00D0\u09F3]|د\.إ/g;
+        if (CURRENCY_PATTERN.test(val)) {
+          val = val.replace(/[Ð\u00D0\u09F3]|د\.إ/g, 'AED ');
           changed = true;
         }
 
@@ -66,13 +66,13 @@ export default function TabbyPromoWidget({
         }
       }
 
-      // 2. Specific fix for Tabby's Currency elements (<span class="Currency__Currency_aed...">)
+      // 2. Specific fix for Tabby's Currency elements (<span class="Currency__Currency_aed...">) 
       const currencyEls = container.querySelectorAll('[class*="Currency"], [class*="currency"]');
       currencyEls.forEach((el) => {
         el.style.fontFeatureSettings = 'normal';
         el.style.fontFamily = 'inherit';
         const txt = el.textContent || '';
-        if (txt.includes('Ð') || txt.includes('\u00D0') || txt.trim() === 'Ð') {
+        if (/[Ð\u00D0\u09F3]|د\.إ/.test(txt)) {
           el.textContent = 'AED ';
         }
       });
