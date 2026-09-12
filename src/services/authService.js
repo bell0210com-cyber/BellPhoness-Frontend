@@ -228,8 +228,16 @@ export function subscribeToProfile(uid, callback) {
     callback(null);
     return () => {};
   }
-  return onSnapshot(doc(db, "customers", uid), (snapshot) => {
-    callback(snapshot.exists() ? snapshot.data() : null);
-  });
+  return onSnapshot(
+    doc(db, "customers", uid),
+    (snapshot) => {
+      callback(snapshot.exists() ? snapshot.data() : null);
+    },
+    (error) => {
+      console.warn('[authService] Profile snapshot listener notice:', error?.message || error);
+      callback(null);
+    }
+  );
 }
+
 
