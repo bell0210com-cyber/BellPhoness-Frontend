@@ -9,6 +9,10 @@ export default function ProductReviews({ productId }) {
     if (productId) {
       getProductReviews(productId)
         .then(setReviews)
+        .catch((err) => {
+          console.warn('[ProductReviews] Notice loading reviews:', err?.message || err);
+          setReviews([]);
+        })
         .finally(() => setLoading(false));
     }
   }, [productId]);
