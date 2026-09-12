@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import PageHero from '../components/PageHero';
@@ -113,7 +113,7 @@ function AddressStep({ address, onChange, next }) {
   );
 }
 
-function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next }) {
+function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next, tabbyEligibility }) {
   return (
     <div className="checkout-panel">
       <h2>Select payment method</h2>
@@ -164,13 +164,22 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
             className={`payment-option-card ${paymentMethod === 'tabby' ? 'selected' : ''}`}
             style={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               gap: 14,
               padding: '16px 18px',
-              border: paymentMethod === 'tabby' ? '2px solid var(--gold, #be9a5d)' : '1px solid #d8d1c8',
-              background: paymentMethod === 'tabby' ? '#fdfaf5' : '#fff',
+              border: tabbyEligibility && !tabbyEligibility.isAvailable
+                ? '1px dashed #e2a89f'
+                : paymentMethod === 'tabby'
+                ? '2px solid var(--gold, #be9a5d)'
+                : '1px solid #d8d1c8',
+              background: tabbyEligibility && !tabbyEligibility.isAvailable
+                ? '#fff8f7'
+                : paymentMethod === 'tabby'
+                ? '#fdfaf5'
+                : '#fff',
               borderRadius: 10,
-              cursor: 'pointer',
+              cursor: tabbyEligibility && !tabbyEligibility.isAvailable ? 'not-allowed' : 'pointer',
+              opacity: tabbyEligibility && !tabbyEligibility.isAvailable ? 0.7 : 1,
               transition: 'all 0.2s ease',
             }}
           >
@@ -179,14 +188,37 @@ function PaymentStep({ paymentMethod, setPaymentMethod, dubaiOrder, price, next 
               name="paymentMethod"
               value="tabby"
               checked={paymentMethod === 'tabby'}
-              onChange={() => setPaymentMethod('tabby')}
-              style={{ cursor: 'pointer' }}
+              disabled={tabbyEligibility && !tabbyEligibility.isAvailable}
+              onChange={() => {
+                if (!tabbyEligibility || tabbyEligibility.isAvailable) {
+                  setPaymentMethod('tabby');
+                }
+              }}
+              style={{ marginTop: 4, cursor: tabbyEligibility && !tabbyEligibility.isAvailable ? 'not-allowed' : 'pointer' }}
             />
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <strong style={{ fontSize: 14, color: '#111' }}>
-                Pay later with Tabby
-              </strong>
-              <TabbyLogo width={76} height={28} />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <strong style={{ fontSize: 14, color: tabbyEligibility && !tabbyEligibility.isAvailable ? '#888' : '#111' }}>
+                  Pay later with Tabby
+                </strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {tabbyEligibility && !tabbyEligibility.isAvailable && (
+                    <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 11, background: '#fee2e2', color: '#991b1b', fontWeight: 600 }}>
+                      Unavailable
+                    </span>
+                  )}
+                  <TabbyLogo width={76} height={28} />
+                </div>
+              </div>
+              {tabbyEligibility && !tabbyEligibility.isAvailable ? (
+                <p style={{ fontSize: 12, color: '#b91c1c', margin: '6px 0 0', lineHeight: 1.4 }}>
+                  {tabbyEligibility.message || 'Sorry, Tabby is unable to approve this purchase for this phone number.'}
+                </p>
+              ) : (
+                <p style={{ fontSize: 12, color: '#555', margin: '6px 0 0', lineHeight: 1.4 }}>
+                  Split your purchase into <strong>4 interest-free monthly installments</strong>. No fees, no interest.
+                </p>
+              )}
             </div>
           </label>
         </div>
@@ -280,6 +312,61 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
   const [orderId, setOrderId] = useState('');
+  const [tabbyEligibility, setTabbyEligibility] = useState({
+    checked: false,
+    isAvailable: true,
+    message: '',
+    reason: '',
+  });
+
+  // Background pre-scoring check: fires automatically as soon as customer enters phone/email
+  useEffect(() => {
+    const rawPhone = (address.phone || '').replace(/[^0-9]/g, '');
+    if (rawPhone.length < 8 || total <= 0) return;
+
+    let isMounted = true;
+    const timer = setTimeout(async () => {
+      try {
+        const result = await tabbyApi.checkEligibility({
+          amount: total,
+          phone: address.phone,
+          email: address.email,
+          name: address.fullName,
+        });
+
+        if (!isMounted) return;
+
+        if (result && result.isAvailable === false) {
+          setTabbyEligibility({
+            checked: true,
+            isAvailable: false,
+            message: result.message || 'Sorry, Tabby is unable to approve this purchase for this phone number.',
+            reason: result.rejectionReason,
+          });
+
+          // Automatically switch payment method away from Tabby if currently selected
+          setPaymentMethod((current) => (current === 'tabby' ? 'tamara' : current));
+        } else {
+          setTabbyEligibility({
+            checked: true,
+            isAvailable: true,
+            message: '',
+            reason: '',
+          });
+        }
+      } catch (err) {
+        // Fail-safe approach: default to available on network error
+        if (isMounted) {
+          setTabbyEligibility({ checked: true, isAvailable: true, message: '', reason: '' });
+        }
+      }
+    }, 500);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [address.phone, address.email, total]);
 
   const updateAddress = (key, value) => setAddress((current) => ({ ...current, [key]: value }));
 
@@ -434,12 +521,26 @@ export default function CheckoutPage() {
         }
       } else if (paymentMethod === 'tabby') {
         // Tabby Checkout flow: Dedicated try/catch block
-        // Gracefully captures any error (e.g. 400 rejection), displays in UI banner, and avoids red console crashes
+        // Gracefully captures any error (or clean 200 rejection), displays in UI banner, and avoids crashes
         try {
           const session = await tabbyApi.createCheckoutSession({
             items,
             shippingAddress: address,
           });
+
+          // Handle clean HTTP 200 rejection from Tabby
+          if (session?.status === 'rejected' || session?.success === false) {
+            const errorMsg = session?.message || 'Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order.';
+            setError(errorMsg);
+            setPlacing(false);
+            setTabbyEligibility({
+              checked: true,
+              isAvailable: false,
+              message: errorMsg,
+              reason: session?.rejection_reason,
+            });
+            return;
+          }
 
           const redirectUrl = session?.checkout_url || session?.checkoutUrl;
           if (redirectUrl) {
@@ -599,6 +700,7 @@ export default function CheckoutPage() {
               dubaiOrder={dubaiOrder}
               price={total}
               next={() => setStep(4)}
+              tabbyEligibility={tabbyEligibility}
             />
           )}
 

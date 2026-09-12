@@ -180,4 +180,25 @@ export const tabbyApi = {
     }
     return data;
   },
+
+  /**
+   * Performs background pre-scoring check with minimal required data:
+   * amount, currency, buyer.email, buyer.phone
+   * POST /api/tabby/pre-score
+   */
+  checkEligibility: async ({ amount, phone, email, name }) => {
+    try {
+      const endpoint = getEndpoint('/api/tabby/pre-score');
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, phone, email, name }),
+      });
+      if (!res.ok) return { isAvailable: true, status: 'created', failSafe: true };
+      return await res.json();
+    } catch (err) {
+      console.warn('[Tabby Pre-scoring Client Notice]:', err.message);
+      return { isAvailable: true, status: 'created', failSafe: true };
+    }
+  },
 };
