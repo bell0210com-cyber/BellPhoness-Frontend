@@ -121,6 +121,7 @@ export default function TabbyPromoWidget({
             source: source,
             publicKey: TABBY_PUBLIC_KEY,
             merchantCode: TABBY_MERCHANT_CODE,
+            shouldInheritBg: false,
           });
           // Sanitize immediately after init call
           setTimeout(sanitizeTabbyDOM, 50);
@@ -161,7 +162,7 @@ export default function TabbyPromoWidget({
         style={{ display: tabbyScriptRendered ? 'block' : 'none' }}
       />
 
-      {/* Verified baseline markup: ensures seamless display while or if script does not populate */}
+      {/* Verified baseline markup: matches Tabby's official default white card design */}
       {!tabbyScriptRendered && (
         <div
           className="tabby-promo-baseline"
@@ -171,16 +172,17 @@ export default function TabbyPromoWidget({
             justifyContent: 'space-between',
             gap: '8px',
             flexWrap: 'wrap',
-            background: '#111111',
-            border: '0.5px solid #2a2a2a',
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
             borderRadius: '10px',
-            padding: '10px 14px',
+            padding: '12px 14px',
             fontSize: '12.5px',
-            color: '#e4e4e7',
+            color: '#18181b',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-            <span>As low as <strong>AED {installmentAmount}/month</strong> or 4 interest-free payments.</span>
+            <span>As low as <strong style={{ color: '#09090b', fontWeight: 600 }}>AED {installmentAmount}/month</strong> or 4 interest-free payments.</span>
           </span>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <TabbyLogo width={64} height={22} />

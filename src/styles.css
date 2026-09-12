@@ -3740,9 +3740,19 @@
   content: none !important;
 }
 
-.tabby-promo-baseline strong {
-  color: #fff;
-  font-weight: 600;
+.tabby-promo-baseline,
+.tabby-promo-badge {
+  background: #ffffff !important;
+  border: 1px solid #e4e4e7 !important;
+  border-radius: 10px !important;
+  color: #18181b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.tabby-promo-baseline strong,
+.tabby-promo-badge strong {
+  color: #09090b !important;
+  font-weight: 600 !important;
 }
 
 

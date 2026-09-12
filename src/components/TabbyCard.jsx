@@ -19,6 +19,7 @@ export default function TabbyCard({ price, currency = 'AED' }) {
             lang: 'en',
             publicKey: TABBY_PUBLIC_KEY,
             merchantCode: TABBY_MERCHANT_CODE,
+            shouldInheritBg: false,
           });
         }
       } catch (err) {
